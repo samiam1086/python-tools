@@ -1,12 +1,7 @@
 import base64
 import string
-
-#global variables for cascade Cipher logic
-isBase64 = False
-isBase32 = False
-isBase16 = False
-isBase85Ascii = False
-isBase85 = False
+import binascii
+from binascii import unhexlify
 
 #base64 decode function
 def base64D(strToDecode: str):
@@ -16,10 +11,7 @@ def base64D(strToDecode: str):
         strToDecode = strToDecode.decode()
     except:
         return "Not base64"
-    
-    #logic to see if the current cipher is correct for cascade mode to run cleaner
-    global isBase64
-    isBase64 = True 
+
     return strToDecode
 
 #base32 decode function
@@ -31,9 +23,6 @@ def base32D(strToDecode: str):
     except:
         return "Not base32"
     
-    #logic to see if the current cipher is correct for cascade mode to run cleaner
-    global isBase32
-    isBase32 = True
     return strToDecode
 
 #base16 decode function
@@ -44,10 +33,7 @@ def base16D(strToDecode: str):
         strToDecode = strToDecode.decode()
     except:
         return "Not base16"
-    
-    #logic to see if the current cipher is correct for cascade mode to run cleaner
-    global isBase16
-    isBase16 = True
+
     return strToDecode
 
 #base85Ascii decode function
@@ -59,9 +45,6 @@ def base85AsciiD(strToDecode: str):
     except:
         return "Not base85Ascii"
     
-    #logic to see if the current cipher is correct for cascade mode to run cleaner
-    global isBase85Ascii
-    isBase85Ascii = True
     return strToDecode
 
 #base85 decode function
@@ -73,9 +56,6 @@ def base85D(strToDecode: str):
     except:
         return "Not base85"
     
-    #logic to see if the current cipher is correct for cascade mode to run cleaner
-    global isBase85
-    isBase85 = True
     return strToDecode
 
 #rot cipher decode function
@@ -89,10 +69,103 @@ def rotCipher(text, step, alphabets):
     joined_shifted_alphabets = ''.join(shifted_alphabets)
     table = str.maketrans(joined_aphabets, joined_shifted_alphabets)
     return text.translate(table)
+	
+#vigenere cipher
+def vigenere(text, key):
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    input_string = ""
+    dec_key = ""
+    dec_string = ""
+    pos_list = []
+
+    # Takes encrpytion key from user
+    dec_key = key
+    dec_key = dec_key.lower()
+
+    # Takes string from user
+    input_string = text
+    input_string_cpy = input_string
+    input_string = input_string.lower()
+
+    # Lengths of input_string
+    string_length = len(input_string)
+
+    # Expands the encryption key to make it longer than the inputted string
+    expanded_key = dec_key
+    expanded_key_length = len(expanded_key)
+
+    while expanded_key_length < string_length:
+        # Adds another repetition of the encryption key
+        expanded_key = expanded_key + dec_key
+        expanded_key_length = len(expanded_key)
+
+    key_position = 0
+    i = 0
+    for letter in input_string:
+        if letter in alphabet:
+            if(ord(input_string_cpy[i]) < 96):
+                pos_list.append(i)
+            # cycles through each letter to find it's numeric position in the alphabet
+            position = alphabet.find(letter)
+            # moves along key and finds the characters value
+            key_character = expanded_key[key_position]
+            key_character_position = alphabet.find(key_character)
+            key_position = key_position + 1
+            # changes the original of the input string character
+            new_position = position - key_character_position
+            if new_position > 26:
+                new_position = new_position + 26
+            new_character = alphabet[new_position]
+            dec_string = dec_string + new_character
+        else:
+            dec_string = dec_string + letter
+        
+        i += 1
+    #convert the correct things to upper case
+    temp_array = list(dec_string)
+    for x in range(len(temp_array)):
+        if x in pos_list:
+            temp_array[x] = temp_array[x].upper()
+        
+    dec_string = "".join(temp_array)
+    return(dec_string)
+
+#atbash cipher
+def atBash(inp):
+
+    charlistUpper = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    charlistUpperReverse = ['Z', "Y", "X", "W", "V", "U", "T", "S", "R", "Q", "P", "O", "N", "M", "L", "K", "J", "I", "H", "G", "F", "E", "D", "C", "B", "A"]
+    charlistLower = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+    charlistLowerReverse = ['z', "y", "x", "w", "v", "u", "t", "s", "r", "q", "p", "o", "n", "m", "l", "k", "j", "i", "h", "g", "f", "e", "d", "c", "b", "a"]
+    
+    output = ""
+    inpArray = list(inp)
+    for x in range(len(inpArray)):
+        # check if it is upper case 
+        if((ord(inpArray[x]) >= 65) and (ord(inpArray[x]) <= 90)):
+            pos = charlistUpper.index(inpArray[x])
+            output += charlistUpperReverse[pos]
+        elif(ord(inpArray[x]) >= 97 and ord(inpArray[x]) <= 122): #check if lowercase
+            pos = charlistLower.index(inpArray[x])
+            output += charlistLowerReverse[pos]
+        else:
+            output += inpArray[x] 
+    
+    return output
+
+#xor NOT CURRENTLY FUNCTIONING PROPERLY
+def xor(data, key): 
+    try:
+        s1 = unhexlify(data)
+        s2 = unhexlify(key)
+        return "".join([chr(ord(c1) ^ ord(c2)) for (c1,c2) in zip(s1,s2)])
+    except:
+        return "Not XOR or XOR failed"
 
 
 #main running area for calling functions
 inStr = input("enter your string: ")
+key = input("enter a key if applicable: ")
 print('')
 print("Input:".ljust(15), inStr)
 print("Algorithm(s)".ljust(15), "Output")
@@ -101,78 +174,14 @@ print("base32".ljust(15), base32D(inStr))
 print("base16".ljust(15), base16D(inStr))
 print("base85Ascii".ljust(15), base85AsciiD(inStr))
 print("base85".ljust(15), base85D(inStr))
+print("atbash".ljust(15), atBash(inStr))
+if(key != ""):
+    print("vigenere".ljust(15), vigenere(inStr, key))
+    print("xor(all in hex)".ljust(15), xor(inStr, key)) # the input and key must be in hex with no spaces
 
 alphabets = (string.ascii_lowercase, string.ascii_uppercase, string.digits)
 for x in range(1,26):
     print(("Rot" + str((26-x))).ljust(15), rotCipher(inStr, x, alphabets))
 print('')
 
-#run the string through cascading ciphers
-runCascade = input('Would you like to use cascading decrypt? (y/n): ')
-runCascade = runCascade.lower()
-
-#logic from earlier inside the functions if it returns a valid decoded string global var gets updated
-#and is checked for in this if statement to make cascade decode less messy
-if runCascade == 'y':
-    if isBase64 == True: #if isBase64 came back as true run this if statement
-        print("Algorithm(s)".ljust(20), "Output")
-        print("base64(base64)".ljust(20), base64D(base64D(inStr)))
-        print("base32(base64)".ljust(20), base32D(base64D(inStr)))
-        print("base16(base64)".ljust(20), base16D(base64D(inStr)))
-        print("base85Ascii(base64)".ljust(20), base85AsciiD(base64D(inStr)))
-        print("base85(base64)".ljust(20), base85D(base64D(inStr)))
-
-        rotString = base64D(inStr)
-        for x in range(1,26):
-            print(("Rot" + str((26-x)) + "(base64)").ljust(20), rotCipher(rotString, x, alphabets))
-
-    elif isBase32 == True: #if isBase32 came back as true run this if statement
-        print("Algorithm(s)".ljust(20), "Output")
-        print("base64(base32)".ljust(20), base64D(base32D(inStr)))
-        print("base32(base32)".ljust(20), base32D(base32D(inStr)))
-        print("base16(base32)".ljust(20), base16D(base32D(inStr)))
-        print("base85Ascii(base32)".ljust(20), base85AsciiD(base32D(inStr)))
-        print("base85(base32)".ljust(20), base85D(base32D(inStr)))
-
-        rotString = base32D(inStr)
-        for x in range(1,26):
-            print(("Rot" + str((26-x)) + "(base32)").ljust(20), rotCipher(rotString, x, alphabets))
-
-    elif isBase16 == True: #if isBase16 came back as true run this if statement
-        print("Algorithm(s)".ljust(20), "Output")
-        print("base64(base16)".ljust(20), base64D(base16D(inStr)))
-        print("base32(base16)".ljust(20), base32D(base16D(inStr)))
-        print("base16(base16)".ljust(20), base16D(base16D(inStr)))
-        print("base85Ascii(base16)".ljust(20), base85AsciiD(base16D(inStr)))
-        print("base85(base16)".ljust(20), base85D(base16D(inStr)))
-
-        rotString = base16D(inStr)
-        for x in range(1,26):
-            print(("Rot" + str((26-x)) + "(base16)").ljust(20), rotCipher(rotString, x, alphabets))
-
-    elif isBase85Ascii == True: #if isBase85Ascii came back as true run this if statement
-        print("Algorithm(s)".ljust(25), "Output")
-        print("base64(base85Ascii)".ljust(25), base64D(base85AsciiD(inStr)))
-        print("base32(base85Ascii)".ljust(25), base32D(base85AsciiD(inStr)))
-        print("base16(base85Ascii)".ljust(25), base16D(base85AsciiD(inStr)))
-        print("base85Ascii(base85Ascii)".ljust(25), base85AsciiD(base85AsciiD(inStr)))
-        print("base85(base85Ascii)".ljust(25), base85D(base85AsciiD(inStr)))
-
-        rotString = base85AsciiD(inStr)
-        for x in range(1,26):
-            print(("Rot" + str((26-x)) + "(base85Ascii)").ljust(25), rotCipher(rotString, x, alphabets))
-
-    elif isBase85 == True: #if isBase85 came back as true run this if statement
-        print("Algorithm(s)".ljust(20), "Output")
-        print("base64(base85)".ljust(20), base64D(base85D(inStr)))
-        print("base32(base85)".ljust(20), base32D(base85D(inStr)))
-        print("base16(base85)".ljust(20), base16D(base85D(inStr)))
-        print("base85Ascii(base85)".ljust(20), base85AsciiD(base85D(inStr)))
-        print("base85(base85)".ljust(20), base85D(base85D(inStr)))
-
-        rotString = base85D(inStr)
-        for x in range(1,26):
-            print(("Rot" + str((26-x)) + "(base85)").ljust(20), rotCipher(rotString, x, alphabets))
-
-else: #if the input was n or something else 
-    exit()
+pause1 = input("")
