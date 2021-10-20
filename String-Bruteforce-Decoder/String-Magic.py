@@ -1,10 +1,32 @@
 import base64
 import string
+import codext
 import binascii
 from binascii import unhexlify
 
+#base122
+def base122(inp):
+    try:
+        return codext.decode(inp, "base122")
+    except:
+        return "Not base122"
+
+#base100
+def base100(inp):
+    try:
+        return codext.decode(inp, "base100")
+    except:
+        return "Not base100"
+
+#base91
+def base91(inp):
+    try:
+        return codext.decode(inp, "base91")
+    except:
+        return "Not base91"
+
 #base64 decode function
-def base64D(strToDecode: str):
+def base64(strToDecode: str):
     try:
         strToDecode = strToDecode.encode()
         strToDecode = base64.b64decode(strToDecode)
@@ -14,8 +36,43 @@ def base64D(strToDecode: str):
 
     return strToDecode
 
+#base63
+def base63(inp):
+    try:
+        return codext.decode(inp, "base63")
+    except:
+        return "Not base63"
+
+#base62
+def base62(inp):
+    try:
+        return codext.decode(inp, "base62")
+    except:
+        return "Not base62"
+
+#base58
+def base58(inp):
+    try:
+        return codext.decode(inp, "base58")
+    except:
+        return "Not base58"
+
+#base45
+def base45(inp):
+    try:
+        return codext.decode(inp, "base45")
+    except:
+        return "Not base45"
+
+#base36
+def base36(inp):
+    try:
+        return codext.decode(inp, "base36")
+    except:
+        return "Not base36"
+
 #base32 decode function
-def base32D(strToDecode: str):
+def base32(strToDecode: str):
     try:
         strToDecode = strToDecode.encode()
         strToDecode = base64.b32decode(strToDecode)
@@ -37,7 +94,7 @@ def base16D(strToDecode: str):
     return strToDecode
 
 #base85Ascii decode function
-def base85AsciiD(strToDecode: str):
+def base85Ascii(strToDecode: str):
     try:
         strToDecode = strToDecode.encode()
         strToDecode = base64.a85decode(strToDecode)
@@ -48,7 +105,7 @@ def base85AsciiD(strToDecode: str):
     return strToDecode
 
 #base85 decode function
-def base85D(strToDecode: str):
+def base85(strToDecode: str):
     try:
         strToDecode = strToDecode.encode()
         strToDecode = base64.b85decode(strToDecode)
@@ -160,7 +217,32 @@ def xor(data, key):
         s2 = unhexlify(key)
         return "".join([chr(ord(c1) ^ ord(c2)) for (c1,c2) in zip(s1,s2)])
     except:
-        return "Not XOR or XOR failed"
+        return "Not xor or xor failed"
+
+def binary_ascii(bits, encoding='utf-8', errors='surrogatepass'):
+    try:
+        bits = bits.replace(" ", "")
+        n = int(bits, 2)
+        return int2bytes(n).decode(encoding, errors)
+    except:
+        return "Not binary"
+
+def int2bytes(i):
+    hex_string = '%x' % i
+    n = len(hex_string)
+    return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
+
+def citrix(inp):
+    try:
+        return codext.decode(inp, "citrix")
+    except:
+        return "Not citrix ctx1"
+
+def morse(inp):
+    try:
+        return codext.decode(inp, "morse")
+    except:
+        return "Not morse code"
 
 
 #main running area for calling functions
@@ -169,12 +251,25 @@ key = input("enter a key if applicable: ")
 print('')
 print("Input:".ljust(15), inStr)
 print("Algorithm(s)".ljust(15), "Output")
-print("base64".ljust(15), base64D(inStr))
-print("base32".ljust(15), base32D(inStr))
-print("base16".ljust(15), base16D(inStr))
-print("base85Ascii".ljust(15), base85AsciiD(inStr))
-print("base85".ljust(15), base85D(inStr))
+print("base122".ljust(15), base122(inStr))
+print("base100".ljust(15), base100(inStr))
+print("base91".ljust(15), base91(inStr))
+print("base85Ascii".ljust(15), base85Ascii(inStr))
+print("base85".ljust(15), base85(inStr))
+print("base64".ljust(15), base64(inStr))
+print("base63".ljust(15), base63(inStr))
+print("base62".ljust(15), base62(inStr))
+print("base58".ljust(15), base58(inStr))
+print("base45".ljust(15), base45(inStr))
+print("base36".ljust(15), base36(inStr))
+print("base32".ljust(15), base32(inStr))
+print("hex".ljust(15), base16D(inStr))
+print("binary".ljust(15), binary_ascii(inStr))
 print("atbash".ljust(15), atBash(inStr))
+print("citrix ctx1".ljust(15), citrix(inStr))
+print("morse code".ljust(15), morse(inStr))
+
+
 if(key != ""):
     print("vigenere".ljust(15), vigenere(inStr, key))
     print("xor(all in hex)".ljust(15), xor(inStr, key)) # the input and key must be in hex with no spaces
