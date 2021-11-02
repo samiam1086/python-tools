@@ -25,8 +25,30 @@ def base91(inp):
     except:
         return "Not base91"
 
+#base85Ascii decode function
+def base85Ascii(strToDecode: str):
+    try:
+        strToDecode = strToDecode.encode()
+        strToDecode = base64.a85decode(strToDecode)
+        strToDecode = strToDecode.decode()
+    except:
+        return "Not base85Ascii"
+    
+    return strToDecode
+
+#base85 decode function
+def base85(strToDecode: str):
+    try:
+        strToDecode = strToDecode.encode()
+        strToDecode = base64.b85decode(strToDecode)
+        strToDecode = strToDecode.decode()
+    except:
+        return "Not base85"
+    
+    return strToDecode
+
 #base64 decode function
-def base64(strToDecode: str):
+def base64D(strToDecode: str):
     try:
         strToDecode = strToDecode.encode()
         strToDecode = base64.b64decode(strToDecode)
@@ -34,7 +56,6 @@ def base64(strToDecode: str):
     except:
         return "Not base64"
 
-    return strToDecode
 
 #base63
 def base63(inp):
@@ -80,40 +101,14 @@ def base32(strToDecode: str):
     except:
         return "Not base32"
     
-    return strToDecode
 
 #base16 decode function
-def base16D(strToDecode: str):
+def base16(strToDecode):
     try:
-        strToDecode = strToDecode.encode()
-        strToDecode = base64.b16decode(strToDecode)
-        strToDecode = strToDecode.decode()
+        return bytes.fromhex(strToDecode).decode('utf-8')
     except:
-        return "Not base16"
+        return "Not hex"
 
-    return strToDecode
-
-#base85Ascii decode function
-def base85Ascii(strToDecode: str):
-    try:
-        strToDecode = strToDecode.encode()
-        strToDecode = base64.a85decode(strToDecode)
-        strToDecode = strToDecode.decode()
-    except:
-        return "Not base85Ascii"
-    
-    return strToDecode
-
-#base85 decode function
-def base85(strToDecode: str):
-    try:
-        strToDecode = strToDecode.encode()
-        strToDecode = base64.b85decode(strToDecode)
-        strToDecode = strToDecode.decode()
-    except:
-        return "Not base85"
-    
-    return strToDecode
 
 #rot cipher decode function
 def rotCipher(text, step, alphabets):
@@ -256,23 +251,28 @@ print("base100".ljust(15), base100(inStr))
 print("base91".ljust(15), base91(inStr))
 print("base85Ascii".ljust(15), base85Ascii(inStr))
 print("base85".ljust(15), base85(inStr))
-print("base64".ljust(15), base64(inStr))
+print("base64".ljust(15), base64D(inStr))
 print("base63".ljust(15), base63(inStr))
 print("base62".ljust(15), base62(inStr))
 print("base58".ljust(15), base58(inStr))
 print("base45".ljust(15), base45(inStr))
 print("base36".ljust(15), base36(inStr))
 print("base32".ljust(15), base32(inStr))
-print("hex".ljust(15), base16D(inStr))
+print("hex".ljust(15), base16(inStr))
 print("binary".ljust(15), binary_ascii(inStr))
 print("atbash".ljust(15), atBash(inStr))
 print("citrix ctx1".ljust(15), citrix(inStr))
 print("morse code".ljust(15), morse(inStr))
+print("reversed".ljust(15), inStr[::-1])
 
 
 if(key != ""):
     print("vigenere".ljust(15), vigenere(inStr, key))
     print("xor(all in hex)".ljust(15), xor(inStr, key)) # the input and key must be in hex with no spaces
+
+print()
+inpx = input("hit enter to continue")
+print()
 
 alphabets = (string.ascii_lowercase, string.ascii_uppercase, string.digits)
 for x in range(1,26):
