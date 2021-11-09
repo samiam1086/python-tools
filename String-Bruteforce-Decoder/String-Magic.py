@@ -48,11 +48,9 @@ def base85(strToDecode: str):
     return strToDecode
 
 #base64 decode function
-def base64D(strToDecode: str):
+def base64D(inp):
     try:
-        strToDecode = strToDecode.encode()
-        strToDecode = base64.b64decode(strToDecode)
-        strToDecode = strToDecode.decode()
+        return codext.decode(inp, "base64")
     except:
         return "Not base64"
 
@@ -93,22 +91,45 @@ def base36(inp):
         return "Not base36"
 
 #base32 decode function
-def base32(strToDecode: str):
+def base32(inp):
     try:
-        strToDecode = strToDecode.encode()
-        strToDecode = base64.b32decode(strToDecode)
-        strToDecode = strToDecode.decode()
+        return codext.decode(inp, "base32")
     except:
         return "Not base32"
     
 
-#base16 decode function
-def base16(strToDecode):
+#hex
+def base16(inp):
     try:
-        return bytes.fromhex(strToDecode).decode('utf-8')
+        return bytes.fromhex(inp).decode('utf-8')
     except:
         return "Not hex"
 
+#decimal
+def base10(inp):
+    try:
+        arr = inp.split()
+        output = ""
+        for x in range(len(arr)):
+            output += chr(int(arr[x]))
+
+        return output
+    except:
+        return "Not decimal"
+
+#binary
+def base2(bits, encoding='utf-8', errors='surrogatepass'):
+    try:
+        bits = bits.replace(" ", "")
+        n = int(bits, 2)
+        return int2bytes(n).decode(encoding, errors)
+    except:
+        return "Not binary"
+
+def int2bytes(i):
+    hex_string = '%x' % i
+    n = len(hex_string)
+    return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
 
 #rot cipher decode function
 def rotCipher(text, step, alphabets):
@@ -214,19 +235,6 @@ def xor(data, key):
     except:
         return "Not xor or xor failed"
 
-def binary_ascii(bits, encoding='utf-8', errors='surrogatepass'):
-    try:
-        bits = bits.replace(" ", "")
-        n = int(bits, 2)
-        return int2bytes(n).decode(encoding, errors)
-    except:
-        return "Not binary"
-
-def int2bytes(i):
-    hex_string = '%x' % i
-    n = len(hex_string)
-    return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
-
 def citrix(inp):
     try:
         return codext.decode(inp, "citrix")
@@ -238,7 +246,7 @@ def morse(inp):
         return codext.decode(inp, "morse")
     except:
         return "Not morse code"
-
+        
 
 #main running area for calling functions
 inStr = input("enter your string: ")
@@ -246,6 +254,7 @@ key = input("enter a key if applicable: ")
 print('')
 print("Input:".ljust(15), inStr)
 print("Algorithm(s)".ljust(15), "Output")
+#bases
 print("base122".ljust(15), base122(inStr))
 print("base100".ljust(15), base100(inStr))
 print("base91".ljust(15), base91(inStr))
@@ -258,8 +267,10 @@ print("base58".ljust(15), base58(inStr))
 print("base45".ljust(15), base45(inStr))
 print("base36".ljust(15), base36(inStr))
 print("base32".ljust(15), base32(inStr))
-print("hex".ljust(15), base16(inStr))
-print("binary".ljust(15), binary_ascii(inStr))
+print("hex (b16)".ljust(15), base16(inStr))
+print("decimal (b10)".ljust(15), base10(inStr))
+print("binary (b2)".ljust(15), base2(inStr))
+#other ciphers
 print("atbash".ljust(15), atBash(inStr))
 print("citrix ctx1".ljust(15), citrix(inStr))
 print("morse code".ljust(15), morse(inStr))
@@ -279,4 +290,4 @@ for x in range(1,26):
     print(("Rot" + str((26-x))).ljust(15), rotCipher(inStr, x, alphabets))
 print('')
 
-pause1 = input("")
+wait = input("")
