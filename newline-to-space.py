@@ -1,11 +1,18 @@
-file_loc = input("Enter the file you wish to replace newlines with spaces: ")
-with open(file_loc, 'r') as f:
-    dat = f.read()
-    f.close()
+import argparse
 
-dat1 = ' '.join(dat.splitlines())
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('file', action='store', type=str, help='The file to parse')
+	parser.add_argument('-of', action='store', type=str, default='out.txt', help='File to output to')
+	options = parser.parse_args()
 
-with open('out.txt', 'w') as f:
-    f.writelines(dat1)
-    f.close()
-    
+
+	with open(options.file, 'r') as f:
+	    dat = f.read()
+	    f.close()
+
+	dat1 = ' '.join(dat.splitlines())
+
+	with open(options.of, 'w') as f:
+	    f.writelines(dat1)
+	    f.close()
