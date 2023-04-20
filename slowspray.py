@@ -59,7 +59,7 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(add_help=True, description="")
+    parser = argparse.ArgumentParser(add_help=True, description="Impacket made password sprayer for Windows AD")
     parser.add_argument('-u', action='store', help='Username or path to file containing usernames 1 per line')
     parser.add_argument('-p', action='store', help='Password to try')
     parser.add_argument('-d', action='store', help='FQDN to use')
