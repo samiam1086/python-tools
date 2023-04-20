@@ -17,18 +17,20 @@ gold_plus = "{}[+]{}".format(color_YELL, color_reset)
 
 def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKey=None, doKerberos=None, kdcHost=None, port=445):
     upasscombo = '{}:{}'.format(username, password)
+
     nthash = ''
     lmhash = ''
     if hashes is not None:
         lmhash, nthash = hashes.split(':')
+        upasscombo = '{}:{}'.format(username, nthash)
 
     stringbinding = r'ncacn_np:%s[\pipe\svcctl]' % remoteName
     logging.debug('StringBinding %s' % stringbinding)
     rpctransport = transport.DCERPCTransportFactory(stringbinding)
     rpctransport.set_dport(port)
     rpctransport.setRemoteHost(remoteHost)
-    if hasattr(rpctransport, 'set_credentials'):
 
+    if hasattr(rpctransport, 'set_credentials'):
         # This method exists only for selected protocol sequences.
         rpctransport.set_credentials(username, password, domain, lmhash, nthash, aesKey)
 
