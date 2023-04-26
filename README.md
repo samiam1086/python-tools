@@ -23,3 +23,7 @@ difforsame is a slightly more helpful version of the diff command.
 ## newline-to-space.py
 
 newline-to-space - self expanatory.
+
+## ibm_db2-connect.py
+
+ibm_db2-connect is a tool to connect to IBMDB2 servers. I have setup a server and checked some of the outputs to try and determine what output goes to what case. Its not perfect but it should save you some time setting your own server up which is a pain.
