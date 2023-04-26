@@ -73,13 +73,22 @@ try:
     input = raw_input
 except NameError:
     pass
-
-from pebble import ProcessPool
+try:
+    from pebble import ProcessPool
+except:
+    print("Error: Pebble is not installed you can install it with python3 -m pip install pebble")
+    sys.exit(0)
+    
 from datetime import datetime
 import socket
 import time
-import nmap
-import os
+
+try:
+    import nmap
+except:
+    print("Error: Python Nmap is not installed you can install it with python3 -m pip install python-nmap")
+    sys.exit(0)
+
 
 cwd = os.path.abspath(os.path.dirname(__file__))
 
