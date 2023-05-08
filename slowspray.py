@@ -43,6 +43,10 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
             samr.connect()
         except Exception as e:
             print(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
+            if options.o is not None:
+                with open(options.p, 'a') as f:
+                    f.write(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
+                    f.close()
 
         s = rpctransport.get_smb_connection()
         s.setTimeout(100000)
@@ -51,11 +55,19 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
         scHandle = resp['lpScHandle']
 
         print(gold_plus, upasscombo.ljust(30), "Valid Admin Creds")
+        if options.o is not None:
+             with open(options.p, 'a') as f:
+                 f.write(gold_plus, upasscombo.ljust(30), "Valid Admin Creds")
+                 f.close()
 
     except  (Exception, KeyboardInterrupt) as e:
 
         if str(e).find("rpc_s_access_denied") != -1 and str(e).find("STATUS_OBJECT_NAME_NOT_FOUND") == -1:
             print(green_plus, upasscombo.ljust(30), "Valid Creds")
+            if options.o is not None:
+                with open(options.p, 'a') as f:
+                    f.write(green_plus, upasscombo.ljust(30), "Valid Creds")
+                    f.close()
 
 
 if __name__ == '__main__':
@@ -64,6 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', action='store', help='Password to try')
     parser.add_argument('-d', action='store', help='FQDN to use')
     parser.add_argument('-H', action='store', help='Password hash to use LM:NT')
+    parser.add_argument('-o', action='store', help='Output file')
     parser.add_argument('-s', action='store_true', default=False, help='Quiet mode will only print valid accounts')
     parser.add_argument('-delay', action='store', help='Number of seconds to wait between each account')
     parser.add_argument('target', action='store', help='IP to check the account against')
@@ -113,6 +126,10 @@ if __name__ == '__main__':
             sendit(username, options.p, options.d, options.target, options.target, options.H, None, False, None, int(445))
         except Exception as e:
             print(str(e))
+            if options.o is not none:
+                with open(options.o, 'a') as f:
+                    f.write(str(e))
+                    f.close()
 
         if options.delay is not None:
             sleep(int(options.delay))
