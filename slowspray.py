@@ -96,7 +96,8 @@ if __name__ == '__main__':
         logging.getLogger().setLevel(logging.INFO)
 
     if options.d is None:
-        options.d = ''
+        print(red_minus + " Domain is required")
+        sys.exit(0)
 
     if options.p is None and options.u != '' and options.H is None:
         from getpass import getpass
