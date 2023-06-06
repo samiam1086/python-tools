@@ -281,7 +281,7 @@ class RemoteShell(cmd.Cmd):
                     else:
                         print("Skipping {} due to net use command failing".format(comand))
 
-                    if options.safe_exec and tmphold.find('The command completed successfully') == -1 and tmphold.find('System error 85 has occurred') != -1:
+                    if options.unsafe_exec == False and tmphold.find('The command completed successfully') == -1 and tmphold.find('System error 85 has occurred') != -1:
                         command_failed = True
 
     def get_output(self):
@@ -349,7 +349,7 @@ if __name__ == '__main__':
     parser.add_argument('-mode', action='store', choices={'SERVER', 'SHARE'}, default='SHARE',
                         help='mode to use (default SHARE, SERVER needs root!)')
     parser.add_argument('-ts', action='store_true', help='adds timestamp to every logging output')
-    parser.add_argument('-safe-exec', action='store_true', help='Will check the output of your command for issues with the net use command and if one is found block all other commands')
+    parser.add_argument('-unsafe-exec', action='store_true', help='Allows commands to continue running even if a drive is in use when net use was attempted')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-codec', action='store', help='Sets encoding used (codec) from the target\'s output (default '
                                                        '"%s"). If errors are detected, run chcp.com at the target, '
