@@ -44,11 +44,12 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
         try:
             samr.connect()
         except Exception as e:
-            print(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
-            if options.o is not None:
-                with open(options.p, 'a') as f:
-                    f.write(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
-                    f.close()
+            if options.s == False:
+                print(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
+                if options.o is not None:
+                    with open(options.p, 'a') as f:
+                        f.write(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
+                        f.close()
 
         s = rpctransport.get_smb_connection()
         s.setTimeout(100000)
