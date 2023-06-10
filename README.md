@@ -27,3 +27,11 @@ newline-to-space - self expanatory.
 ## ibm_db2-connect.py
 
 ibm_db2-connect is a tool to connect to IBMDB2 servers. I have setup a server and checked some of the outputs to try and determine what output goes to what case. Its not perfect but it should save you some time setting your own server up which is a pain.
+
+## userenum.py
+
+userenum will interact with the Kerberos service on a domain controller to see if a username exists.
+
+## smbexec-multi.py
+
+smbexec-multi will execute a command on multiple machines at once (non interactive) but it will get the commands output.
