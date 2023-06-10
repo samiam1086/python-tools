@@ -47,8 +47,8 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
             if options.s == False:
                 print(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
                 if options.o is not None:
-                    with open(options.p, 'a') as f:
-                        f.write(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
+                    with open(options.o, 'a') as f:
+                        f.write('{} {}\n'.format(upasscombo.ljust(30), str(e)[:str(e).find("(")]))
                         f.close()
 
         s = rpctransport.get_smb_connection()
@@ -59,8 +59,8 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
 
         print(gold_plus, upasscombo.ljust(30), "Valid Admin Creds")
         if options.o is not None:
-             with open(options.p, 'a') as f:
-                 f.write(gold_plus, upasscombo.ljust(30), "Valid Admin Creds")
+             with open(options.o, 'a') as f:
+                 f.write('{} {}\n'.format(upasscombo.ljust(30), "Valid Admin Creds"))
                  f.close()
 
     except  (Exception, KeyboardInterrupt) as e:
@@ -68,8 +68,8 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
         if str(e).find("rpc_s_access_denied") != -1 and str(e).find("STATUS_OBJECT_NAME_NOT_FOUND") == -1:
             print(green_plus, upasscombo.ljust(30), "Valid Creds")
             if options.o is not None:
-                with open(options.p, 'a') as f:
-                    f.write(green_plus, upasscombo.ljust(30), "Valid Creds")
+                with open(options.o, 'a') as f:
+                    f.write('{} {}\n'.format(upasscombo.ljust(30), "Valid Creds"))
                     f.close()
 
 def mt_execute(username):  # multithreading requires a function
@@ -79,7 +79,7 @@ def mt_execute(username):  # multithreading requires a function
         print(str(e))
         if options.o is not None:
             with open(options.o, 'a') as f:
-                f.write(str(e))
+                f.write(str(e) + '\n')
                 f.close()
 
     if options.delay is not None:
