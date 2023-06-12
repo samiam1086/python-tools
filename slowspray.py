@@ -121,6 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-method', action='store', choices=['random', 'sequence'], default='random',help='IP to check the account against')
     parser.add_argument('-ip', action='store', help='Your local ip or interface')
+    parser.add_argument('-timeout', action='store', default=5, type=int, help='Timeout for each attempt (Default=5)')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -202,7 +203,7 @@ if __name__ == '__main__':
             for curr_ip in addresses:
                 for username in users_cleaned:
                     try:
-                        out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=10)
+                        out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=options.timeout)
                     except Exception as e:
                         print(str(e))
 
@@ -211,6 +212,6 @@ if __name__ == '__main__':
             for username in users_cleaned:
                 curr_ip = addresses[random.randint(0, len(addresses)-1)]
                 try:
-                    out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=10)
+                    out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=options.timeout)
                 except Exception as e:
                     print(str(e))
