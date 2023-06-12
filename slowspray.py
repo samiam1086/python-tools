@@ -3,9 +3,11 @@ from pebble import ProcessPool
 from impacket import version
 from time import sleep
 
+import netifaces as ni
 import argparse
 import logging
 import random
+import nmap
 import sys
 import os
 
@@ -17,6 +19,24 @@ color_reset = '\033[0m'
 green_plus = "{}[+]{}".format(color_GRE, color_reset)
 red_minus = "{}[-]{}".format(color_RED, color_reset)
 gold_plus = "{}[+]{}".format(color_YELL, color_reset)
+
+def do_ip(inpu, local_ip):  # check if the inputted ips are up so we dont scan thigns we dont need to
+    print('\n[scanning hosts]')
+    scanner = nmap.PortScanner()
+    if os.path.isfile(inpu):  # if its in a file the arguments are different
+        scanner.scan(arguments='-n -sn -iL {}'.format(inpu))
+    else:
+        scanner.scan(hosts=inpu, arguments='-n -sn')
+    uphosts = scanner.all_hosts()
+
+    try:
+        uphosts.remove(local_ip)  # no point in attacking ourselves
+    except:
+        pass
+
+    print('[scan complete]')
+
+    return uphosts
 
 def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKey=None, doKerberos=None, kdcHost=None, port=445):
     upasscombo = '{}:{}'.format(username, password)
@@ -100,6 +120,7 @@ if __name__ == '__main__':
     parser.add_argument('target', action='store', help='IP to check the account against')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-method', action='store', choices=['random', 'sequence'], default='random',help='IP to check the account against')
+    parser.add_argument('-ip', action='store', help='Your local ip or interface')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -127,20 +148,38 @@ if __name__ == '__main__':
         if options.H.find(':') == -1:
             options.H = ':' + options.H
 
-
-    targets = []
-    targets_cleaned = []
-
-    if os.path.isfile(options.target):
-        with open(options.target, 'r') as f:
-            targets = f.readlines()
-            f.close()
-
-        for item in targets:
-            item = item.replace("\r", "")
-            targets_cleaned.append(item.replace("\n", ""))
+    if options.ip is not None:  # did they give us the local ip in the command line
+        local_ip = options.ip
+        ifaces = ni.interfaces()
+        try:  # check to see if the interface has an ip
+            if local_ip in ifaces:
+                local_ip = str(ni.ifaddresses(local_ip)[ni.AF_INET][0]['addr'])
+                print("local IP => " + local_ip)
+        except BaseException as exc:
+            print('{}[!!]{} Error could not get that interface\'s address. Does it have an IP?'.format(color_RED, color_reset))
+            exit(0)
     else:
-        targets_cleaned.append(options.target)
+        # print local interfaces and ips
+        print("")
+        ifaces = ni.interfaces()
+        for face in ifaces:
+            try:  # check to see if the interface has an ip
+                print('{} {}'.format(str(face + ':').ljust(20), ni.ifaddresses(face)[ni.AF_INET][0]['addr']))
+            except BaseException as exc:
+                continue
+
+        local_ip = input("\nEnter you local ip or interface: ")
+
+        # lets you enter eth0 as the ip
+        if local_ip in ifaces:
+            local_ip = str(ni.ifaddresses(local_ip)[ni.AF_INET][0]['addr'])
+            print("local IP => " + local_ip)
+
+    addresses = do_ip(options.target, local_ip)
+
+    if len(addresses) < 1:
+        print("{} Error: No provided hosts are up".format(red_minus))
+        sys.exit(0)
 
     users = []
     users_cleaned = []
@@ -160,7 +199,7 @@ if __name__ == '__main__':
         options.threads = 1
     if options.method == 'sequence':
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
-            for curr_ip in targets_cleaned:
+            for curr_ip in addresses:
                 for username in users_cleaned:
                     try:
                         out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=10)
@@ -170,7 +209,7 @@ if __name__ == '__main__':
     else:
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
             for username in users_cleaned:
-                curr_ip = targets_cleaned[random.randint(0, len(targets_cleaned)-1)]
+                curr_ip = addresses[random.randint(0, len(addresses)-1)]
                 try:
                     out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=10)
                 except Exception as e:
