@@ -292,7 +292,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('target', action='store', help='[[domain/]username[:password]@]<targetName or address>')
+    parser.add_argument('target', action='store', help='[[domain/]username[:password]@]<targetName, address, cidr range, or iprange ex: 10.0.0.1, 10.0.0.0/24 10.0.0.10-25>')
     parser.add_argument('command', action='store', help='commandtorun')
     parser.add_argument('-share', action='store', default='C$', help='share where the output will be grabbed from '
                                                                      '(default C$)')
@@ -406,7 +406,7 @@ if __name__ == '__main__':
     addresses = do_ip(address, local_ip)  # gets a list of up hosts
 
     if len(addresses) < 1:  # ensure that there are targets otherwise whats the point
-        prin("{}[!]{} There are no targets up or the provided list is empty.".format(color_RED, color_reset))
+        print("{}[!]{} There are no targets up or the provided list is empty.".format(color_RED, color_reset))
         exit(0)
 
     print('Total targets: {}'.format(len(addresses)))
@@ -426,4 +426,3 @@ if __name__ == '__main__':
                 continue
             except KeyboardInterrupt as e:
                 continue
-
