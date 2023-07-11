@@ -166,6 +166,10 @@ if __name__ == '__main__':
     else:
         password_list.append(options.p)
 
+    if len(password_list) < 1:
+        print('Password list is empty')
+        sys.exit(1)
+
     if options.ip is not None:  # did they give us the local ip in the command line
         local_ip = options.ip
         ifaces = ni.interfaces()
@@ -212,6 +216,10 @@ if __name__ == '__main__':
             users_cleaned.append(item.replace("\n", ""))
     else:
         users_cleaned.append(options.u)
+
+    if len(users_cleaned) < 1:
+        print('User list is empty')
+        sys.exit(1)
 
     if options.delay is not None: # so that the delay cannot exceed timeout
         options.timeout = options.timeout + options.delay
