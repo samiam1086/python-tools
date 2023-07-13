@@ -8,7 +8,7 @@ letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help = True, description = "Generates a large list of usernames for kerbrute")
     parser.add_argument('-mode', action='store', default='0', choices=['0', '1', '2', '3'], help='Select which type of username you want 0=First.Last 1==FirstletterLast 2=FirstletterMILast 3=ALL')
-    parser.add_argument('-o', '--outputfile', action='store', help='File to output your usernames to')
+    parser.add_argument('-o', '--outputfile', action='store', help='File to output your usernames to. Deafult=./usernames.txt')
     parser.add_argument('-i', '--inputfile', action='store', help='Directory of SecLists/Usernames/Names EX: -i /opt/SecLists/Usernames/Names/')
     
     if len(sys.argv)==1:
