@@ -4,9 +4,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file', action='store', type=str, help='The file to compare to')
     parser.add_argument('file1', action='store', type=str, help='Compares items in this to see if the are in file')
-    parser.add_argument('-of', action='store', type=str, default='out.txt', help='File to output to')
+    parser.add_argument('-of', action='store', type=str, default='difforsameout.txt', help='File to output to. Default=difforsameout.txt')
     parser.add_argument('-s', action='store_true', default=False, help='Silence the console output')
-    parser.add_argument('-o', action='store', type=str, default='inboth', choices=['inboth', 'diff'], help='inboth looks for items that are in both file and file1. diff looks for items that are in file1 but not in file')
+    parser.add_argument('-o', action='store', type=str, default='inboth', choices=['inboth', 'diff'], help='inboth looks for items that are in both file and file1. diff looks for items that are in file1 but not in file. Default=inboth')
     options = parser.parse_args()
 
     with open(options.file, 'r') as f:
