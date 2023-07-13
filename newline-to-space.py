@@ -3,7 +3,7 @@ import argparse
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('file', action='store', type=str, help='The file to parse')
-	parser.add_argument('-of', action='store', type=str, default='out.txt', help='File to output to')
+	parser.add_argument('-of', action='store', type=str, default='newline-to-spaceout.txt', help='File to output to. Default=./newline-to-spaceout.txt')
 	options = parser.parse_args()
 
 
