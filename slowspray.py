@@ -5,6 +5,7 @@ from impacket import version
 from time import sleep
 
 import netifaces as ni
+import ipaddress
 import argparse
 import logging
 import random
@@ -196,8 +197,12 @@ if __name__ == '__main__':
         if local_ip in ifaces:
             local_ip = str(ni.ifaddresses(local_ip)[ni.AF_INET][0]['addr'])
             print("local IP => " + local_ip)
-
-    addresses = do_ip(options.target, local_ip)
+    try:
+        ipaddress.ip_address(options.target)
+        addresses = []
+        addresses.append(options.target)
+    except ValueError as e:
+        addresses = do_ip(options.target, local_ip)
 
     if len(addresses) < 1:
         print("{} Error: No provided hosts are up".format(red_minus))
