@@ -250,6 +250,8 @@ if __name__ == '__main__':
                         try:
                             sleep(options.pd * 60)
                         except KeyboardInterrupt as e:
+                            print('\nCTRL+C detected waiting 3 seconds to continue')
+                            sleep(3)
                             continue
 
 
@@ -274,4 +276,6 @@ if __name__ == '__main__':
                     try:
                         sleep(options.pd * 60)
                     except KeyboardInterrupt as e:
+                        print('\nCTRL+C detected waiting 3 seconds to continue')
+                        sleep(3)
                         continue
