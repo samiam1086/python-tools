@@ -94,7 +94,7 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
             print(green_plus, remoteName.ljust(20), upasscombo.ljust(30), "Valid Creds")
             if options.o is not None:
                 with open(options.o, 'a') as f:
-                    f.write('{} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), "Valid Creds"))
+                    f.write('{} {} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), "Valid Creds"))
                     f.close()
 
 def mt_execute(username, host_ip, passwd):  # multithreading requires a function
