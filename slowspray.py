@@ -1,11 +1,11 @@
 from impacket.dcerpc.v5 import transport, scmr
 from pebble import ProcessPool
-from datetime import datetime
 from impacket import version
 from time import sleep
 
 import netifaces as ni
 import ipaddress
+import datetime
 import argparse
 import logging
 import random
@@ -243,9 +243,14 @@ if __name__ == '__main__':
                     if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1: # second part basically ensures that the current password's index does not equal the end of the array to prevent a sleep when there is no need
                         count = 0
                         sleep(10)
-                        currtime = datetime.now()
-                        print("Hit our max see you in {} mins from {}".format(options.pd, currtime.strftime("%H:%M:%S")))
-                        sleep(options.pd * 60)
+                        currtime = datetime.datetime.now()
+                        exptime = datetime.timedelta(minutes=options.pd)
+                        newtime = currtime + exptime
+                        print("Hit our max see you in {} mins from {} will resume at {}".format(options.pd, currtime.strftime("%H:%M:%S"), newtime.strftime("%H:%M:%S")))
+                        try:
+                            sleep(options.pd * 60)
+                        except KeyboardInterrupt as e:
+                            continue
 
 
     else:
@@ -262,7 +267,11 @@ if __name__ == '__main__':
                 if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1:
                     count = 0
                     sleep(10)
-                    currtime = datetime.now()
-                    print("Hit our max see you in {} mins from {}".format(options.pd, currtime.strftime("%H:%M:%S")))
-                    sleep(options.pd * 60)
-                    
+                    currtime = datetime.datetime.now()
+                    exptime = datetime.timedelta(minutes=options.pd)
+                    newtime = currtime + exptime
+                    print("Hit our max see you in {} mins from {} will resume at {}".format(options.pd, currtime.strftime("%H:%M:%S"), newtime.strftime("%H:%M:%S")))
+                    try:
+                        sleep(options.pd * 60)
+                    except KeyboardInterrupt as e:
+                        continue
