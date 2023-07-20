@@ -339,7 +339,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     options = parser.parse_args()
-    
+
+    if os.geteuid() != 0:
+        print("[!] Must be run as sudo")
+        sys.exit(1)
+        
     # Init the example's logger theme
     logger.init(options.ts)
     command = options.command
