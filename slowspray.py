@@ -250,7 +250,7 @@ if __name__ == '__main__':
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
             for curr_ip in addresses:
                 for password in password_list:
-                    print('Trying password {}'.format(password))
+                    print('Trying password: {}'.format(password))
                     for username in users_cleaned:
                         if options.uap == True:
                             password = username
@@ -281,7 +281,7 @@ if __name__ == '__main__':
     else:
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
             for password in password_list:
-                print('Trying password {}'.format(password))
+                print('Trying password: {}'.format(password))
                 for username in users_cleaned:
                     curr_ip = addresses[random.randint(0, len(addresses)-1)]
                     if options.uap == True:
