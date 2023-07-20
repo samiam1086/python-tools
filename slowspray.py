@@ -71,10 +71,10 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
         except Exception as e:
             if options.s == False:
                 print(red_minus, remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")])
-                if options.o is not None:
-                    with open(options.o, 'a') as f:
-                        f.write('{} {} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")]))
-                        f.close()
+            if options.o is not None:
+                with open(options.o, 'a') as f:
+                    f.write('{} {} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")]))
+                    f.close()
 
         s = rpctransport.get_smb_connection()
         s.setTimeout(100000)
