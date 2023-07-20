@@ -119,6 +119,7 @@ def mt_execute(username, host_ip, passwd, doit):  # multithreading requires a fu
 
 
 if __name__ == '__main__':
+    print(datetime.datetime.now().strftime("%D %H:%M:%S"))
     parser = argparse.ArgumentParser(add_help=True, description="Impacket made password sprayer for Windows AD")
     parser.add_argument('-u', action='store', help='Username or path to file containing usernames 1 per line')
     parser.add_argument('-p', action='store', help='Password to try or file of passwords')
@@ -142,6 +143,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     options = parser.parse_args()
+
+    if options.o is not None:
+        with open(options.o, 'a') as f:
+            f.write(datetime.datetime.now().strftime("%D %H:%M:%S") + '\n')
+            f.close()
 
     if os.geteuid() != 0:
         print("[!] Must be run as sudo")
@@ -276,7 +282,6 @@ if __name__ == '__main__':
                                 print('1')
                                 sleep(1)
                                 continue
-
 
     else:
         with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
