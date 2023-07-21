@@ -73,7 +73,7 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
                 with open('locked-slowspray', 'a') as f:
                     f.write('Locked\n')
                     f.close()
-            if options.s == False:
+            if options.s == False or str(e).find('STATUS_ACCOUNT_LOCKED_OUT') != -1:
                 print(red_minus, remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")])
             if options.o is not None:
                 with open(options.o, 'a') as f:
