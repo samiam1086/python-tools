@@ -41,12 +41,10 @@ if __name__ == '__main__':
         f.close()
 
     for sub in firstnames:
-        if sub.replace('\n', '').lower() not in firstnames_cleaned:
-            firstnames_cleaned.append(sub.replace('\n', '').lower())
+        firstnames_cleaned.append(sub.replace('\n', '').lower())
 
     for sub in lastnames:
-        if sub.replace('\n', '').lower() not in lastnames_cleand:
-            lastnames_cleand.append(sub.replace('\n', '').lower())
+        lastnames_cleand.append(sub.replace('\n', '').lower())
 
     with open(outfile, 'a') as f:
         if options.mode == '0' or options.mode == '3':
