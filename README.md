@@ -35,3 +35,7 @@ userenum will interact with the Kerberos service on a domain controller to see i
 ## smbexec-multi.py
 
 smbexec-multi will execute a command on multiple machines at once (non interactive) but it will get the commands output.
+
+## wwwchk.py
+
+wwwchk is a tool that will take a list of IPs or IP:Ports and see if they are hosting a webpage there printing the response code. This is useful if you are needing to check a lot of IPs and need to filter out undesirable response codes like 404 and 403 quickly. 
