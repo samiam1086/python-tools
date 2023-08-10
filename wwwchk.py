@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     target_list = dat.split('\n') # split it into a list
 
-    if options.i is not None: # if they gave us an options.i lets make it a list
+    if options.i is not None: # if they gave us an options.i lets make it a list the split function does not cause issues if there is no comma it will just appear as 1 string in the list
         options.i = options.i.split(',')
 
     for target in target_list:
@@ -63,6 +63,7 @@ if __name__ == '__main__':
                         with open(options.o, 'a') as f:
                             f.write("http://" + target + " Status Code: " + str(x.status_code) + '\n')
                             f.close()
+                            
         except requests.exceptions.ConnectionError: # if the server is running https we should get this
             https_chk(target)
         except ConnectionResetError:
