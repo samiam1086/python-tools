@@ -4,20 +4,20 @@ import requests
 import argparse
 import sys
 
-def https_chk(item):
-    x = requests.get('https://{}'.format(item), timeout=5, verify=False) # make an https request
+def https_chk(target):
+    x = requests.get('https://{}'.format(target), timeout=5, verify=False) # make an https request
     if options.i is not None:
         if str(x.status_code) not in options.i:
-            print("https://" + item + " Status Code: " + str(x.status_code))
+            print("https://" + target + " Status Code: " + str(x.status_code))
             if options.o is not None:
                 with open(options.o, 'a') as f:
-                    f.write("https://" + item + " Status Code: " + str(x.status_code) + '\n')
+                    f.write("https://" + target + " Status Code: " + str(x.status_code) + '\n')
                     f.close()
     else:
-        print("https://" + item + " Status Code: " + str(x.status_code))
+        print("https://" + target + " Status Code: " + str(x.status_code))
         if options.o is not None:
             with open(options.o, 'a') as f:
-                f.write("https://" + item + " Status Code: " + str(x.status_code) + '\n')
+                f.write("https://" + target + " Status Code: " + str(x.status_code) + '\n')
                 f.close()
 
 
@@ -40,33 +40,33 @@ if __name__ == '__main__':
         dat = f.read()
         f.close()
 
-    list1 = dat.split('\n') # split it into a list
+    target_list = dat.split('\n') # split it into a list
 
     if options.i is not None: # if they gave us an options.i lets make it a list
         options.i = options.i.split(',')
 
-    for item in list1:
+    for target in target_list:
         try:
-            if len(item) > 1:
-                x = requests.get('http://{}'.format(item), timeout=5) # make an http request
+            if len(target) > 0:
+                x = requests.get('http://{}'.format(target), timeout=5) # make an http request
 
                 if options.i is not None:
                     if str(x.status_code) not in options.i: # check if our response is a code designated to be ignroed
-                        print("http://" + item + " Status Code: " + str(x.status_code)) # print our output
+                        print("http://" + target + " Status Code: " + str(x.status_code)) # print our output
                         if options.o is not None:
-                            with open(options.o, 'a') as f: # if options.o then save the item
-                                f.write("http://" + item + " Status Code: " + str(x.status_code) + '\n')
+                            with open(options.o, 'a') as f: # if options.o then save the target
+                                f.write("http://" + target + " Status Code: " + str(x.status_code) + '\n')
                                 f.close()
                 else:
-                    print("http://" + item + " Status Code: " + str(x.status_code))
+                    print("http://" + target + " Status Code: " + str(x.status_code))
                     if options.o is not None:
                         with open(options.o, 'a') as f:
-                            f.write("http://" + item + " Status Code: " + str(x.status_code) + '\n')
+                            f.write("http://" + target + " Status Code: " + str(x.status_code) + '\n')
                             f.close()
         except requests.exceptions.ConnectionError: # if the server is running https we should get this
-            https_chk(item)
+            https_chk(target)
         except ConnectionResetError:
-            https_chk(item)
+            https_chk(target)
         except BaseException as e:
             import traceback
 
