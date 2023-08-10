@@ -8,16 +8,16 @@ def https_chk(target):
     x = requests.get('https://{}'.format(target), timeout=5, verify=False) # make an https request
     if options.i is not None:
         if str(x.status_code) not in options.i:
-            print("https://" + target + " Status Code: " + str(x.status_code))
+            print(x.url + " Status Code: " + str(x.status_code))
             if options.o is not None:
                 with open(options.o, 'a') as f:
-                    f.write("https://" + target + " Status Code: " + str(x.status_code) + '\n')
+                    f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
                     f.close()
     else:
-        print("https://" + target + " Status Code: " + str(x.status_code))
+        print(x.url + " Status Code: " + str(x.status_code))
         if options.o is not None:
             with open(options.o, 'a') as f:
-                f.write("https://" + target + " Status Code: " + str(x.status_code) + '\n')
+                f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
                 f.close()
 
 
@@ -52,18 +52,18 @@ if __name__ == '__main__':
 
                 if options.i is not None:
                     if str(x.status_code) not in options.i: # check if our response is a code designated to be ignroed
-                        print("http://" + target + " Status Code: " + str(x.status_code)) # print our output
+                        print(x.url + " Status Code: " + str(x.status_code)) # print our output
                         if options.o is not None:
                             with open(options.o, 'a') as f: # if options.o then save the target
-                                f.write("http://" + target + " Status Code: " + str(x.status_code) + '\n')
+                                f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
                                 f.close()
                 else:
-                    print("http://" + target + " Status Code: " + str(x.status_code))
+                    print(x.url + " Status Code: " + str(x.status_code))
                     if options.o is not None:
                         with open(options.o, 'a') as f:
-                            f.write("http://" + target + " Status Code: " + str(x.status_code) + '\n')
+                            f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
                             f.close()
-                            
+
         except requests.exceptions.ConnectionError: # if the server is running https we should get this
             https_chk(target)
         except ConnectionResetError:
