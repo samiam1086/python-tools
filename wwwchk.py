@@ -5,20 +5,28 @@ import argparse
 import sys
 
 def https_chk(target):
-    x = requests.get('https://{}'.format(target), timeout=5, verify=False) # make an https request
-    if options.i is not None:
-        if str(x.status_code) not in options.i:
+    try:
+        x = requests.get('https://{}'.format(target), timeout=5, verify=False) # make an https request
+        if options.i is not None:
+            if str(x.status_code) not in options.i:
+                print(x.url + " Status Code: " + str(x.status_code))
+                if options.o is not None:
+                    with open(options.o, 'a') as f:
+                        f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
+                        f.close()
+        else:
             print(x.url + " Status Code: " + str(x.status_code))
             if options.o is not None:
                 with open(options.o, 'a') as f:
                     f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
                     f.close()
-    else:
-        print(x.url + " Status Code: " + str(x.status_code))
-        if options.o is not None:
-            with open(options.o, 'a') as f:
-                f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
-                f.close()
+    except BaseException as e:
+        print('Host {} is not alive'.format(target))
+        if options.debug:
+            import traceback
+
+            traceback.print_exc()
+        pass
 
 
 if __name__ == '__main__':
@@ -27,6 +35,8 @@ if __name__ == '__main__':
     parser.add_argument('inputfile', action='store', help='list of ips to check can be formatted as IP or IP:PORT one per line')
     parser.add_argument('-i', action='store', help='Status codes to ignore list seperated by a comma eg 404,503,200')
     parser.add_argument('-o', action='store', help='output file')
+    parser.add_argument('-debug', action='store_true', help='Turn on debugging')
+
 
     # Suppress only the single warning from urllib3 needed.
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -69,7 +79,9 @@ if __name__ == '__main__':
         except ConnectionResetError:
             https_chk(target)
         except BaseException as e:
-            import traceback
+            print('Host {} is not alive'.format(target))
+            if options.debug:
+                import traceback
 
-            traceback.print_exc()
+                traceback.print_exc()
             continue
