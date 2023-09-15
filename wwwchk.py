@@ -79,6 +79,8 @@ if __name__ == '__main__':
 
         except requests.exceptions.ConnectionError: # if the server is running https we should get this
             https_chk(target)
+        except KeyboardInterrupt:
+            sys.exit(1)
         except ConnectionResetError:
             https_chk(target)
         except BaseException as e:
