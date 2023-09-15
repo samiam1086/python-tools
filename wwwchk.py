@@ -36,7 +36,7 @@ def https_chk(target):
         if str(e).find('Max retries exceeded with url') != -1:
             print('HTTPS Host {} Exceeded maximum retries'.format(target))
         else:
-            print('HTTPS Host {} returned an error'.format(target))
+            print('HTTPS Host {} returned an error {}'.format(target, e))
         if options.debug:
             import traceback
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
             if str(e).find('Max retries exceeded with url') != -1:
                 print('HTTP Host {} Exceeded maximum retries'.format(target))
             else:
-                print('HTTP Host {} returned an error'.format(target))
+                print('HTTP Host {} returned an error {}'.format(target, e))
             if options.debug:
                 import traceback
 
