@@ -3,22 +3,24 @@ from requests import ConnectionError
 import requests
 import argparse
 import sys
+import re
 
 def https_chk(target):
     try:
         x = requests.get('https://{}'.format(target), timeout=5, verify=False) # make an https request
         if options.i is not None:
             if str(x.status_code) not in options.i:
-                print(x.url + " Status Code: " + str(x.status_code))
+                
+                print(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
                 if options.o is not None:
                     with open(options.o, 'a') as f:
-                        f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
+                        f.write(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
                         f.close()
         else:
-            print(x.url + " Status Code: " + str(x.status_code))
+            print(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
             if options.o is not None:
                 with open(options.o, 'a') as f:
-                    f.write(x.url + " Status Code: " + str(x.status_code) + '\n')
+                    f.write(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
                     f.close()
     except BaseException as e:
         if str(e).find('Max retries exceeded with url') != -1:
