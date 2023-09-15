@@ -24,9 +24,9 @@ def https_chk(target):
                     f.close()
     except BaseException as e:
         if str(e).find('Max retries exceeded with url') != -1:
-            print('Host {} is not alive'.format(target))
+            print('HTTPS Host {} is not alive'.format(target))
         else:
-            print('Host {} returned an error'.format(target))
+            print('HTTPS Host {} returned an error'.format(target))
         if options.debug:
             import traceback
 
@@ -87,9 +87,9 @@ if __name__ == '__main__':
             https_chk(target)
         except BaseException as e:
             if str(e).find('Max retries exceeded with url') != -1:
-                print('Host {} is not alive'.format(target))
+                print('HTTP Host {} is not alive'.format(target))
             else:
-                print('Host {} returned an error'.format(target))
+                print('HTTP Host {} returned an error'.format(target))
             if options.debug:
                 import traceback
 
