@@ -11,16 +11,16 @@ def https_chk(target):
         if options.i is not None:
             if str(x.status_code) not in options.i:
                 
-                print(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
+                print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
                 if options.o is not None:
                     with open(options.o, 'a') as f:
-                        f.write(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
+                        f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
                         f.close()
         else:
-            print(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
+            print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
             if options.o is not None:
                 with open(options.o, 'a') as f:
-                    f.write(x.url + " Status Code: " + str(x.status_code) + str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
+                    f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
                     f.close()
     except BaseException as e:
         if str(e).find('Max retries exceeded with url') != -1:
