@@ -1,13 +1,19 @@
 from urllib3.exceptions import InsecureRequestWarning
 from requests import ConnectionError
+try:
+    from fake_useragent import UserAgent
+except BaseException:
+    print('missing pip dependency install with pip install fake-useragent')
 import requests
 import argparse
 import sys
 import re
 
 def https_chk(target):
+    ua = UserAgent()
+    header = {'User-Agent':str(ua.chrome)}
     try:
-        x = requests.get('https://{}'.format(target), timeout=5, verify=False) # make an https request
+        x = requests.get('https://{}'.format(target), timeout=5, verify=False, headers=header) # make an https request
         if options.i is not None:
             if str(x.status_code) not in options.i:
                 
@@ -41,7 +47,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', action='store', help='Status codes to ignore list seperated by a comma eg 404,503,200')
     parser.add_argument('-o', action='store', help='output file')
     parser.add_argument('-debug', action='store_true', help='Turn on debugging')
-
+    
 
     # Suppress only the single warning from urllib3 needed.
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -59,11 +65,12 @@ if __name__ == '__main__':
 
     if options.i is not None: # if they gave us an options.i lets make it a list the split function does not cause issues if there is no comma it will just appear as 1 string in the list
         options.i = options.i.split(',')
-
+    ua = UserAgent()
     for target in target_list:
+        header = {'User-Agent':str(ua.chrome)}
         try:
             if len(target) > 0:
-                x = requests.get('http://{}'.format(target), timeout=5) # make an http request
+                x = requests.get('http://{}'.format(target), timeout=5, headers=header) # make an http request
 
                 if options.i is not None:
                     if str(x.status_code) not in options.i: # check if our response is a code designated to be ignroed
