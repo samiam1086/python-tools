@@ -12,25 +12,29 @@ import re
 def https_chk(target):
     ua = UserAgent()
     header = {'User-Agent':str(ua.chrome)}
+    response_is = ''
     try:
         x = requests.get('https://{}'.format(target), timeout=5, verify=False, headers=header) # make an https request
         if options.i is not None:
             if str(x.status_code) not in options.i:
-                
-                print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
+                if len(x.text) < 5:
+                    response_is = ' EMPTY PAGE'
+                print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + response_is)
                 if options.o is not None:
                     with open(options.o, 'a') as f:
-                        f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
+                        f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + response_is + '\n')
                         f.close()
         else:
-            print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
+            if len(x.text) < 5:
+                response_is = ' EMPTY PAGE'
+            print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip())+ response_is)
             if options.o is not None:
                 with open(options.o, 'a') as f:
-                    f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
+                    f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + response_is + '\n')
                     f.close()
     except BaseException as e:
         if str(e).find('Max retries exceeded with url') != -1:
-            print('HTTPS Host {} is not alive'.format(target))
+            print('HTTPS Host {} Exceeded maximum retries'.format(target))
         else:
             print('HTTPS Host {} returned an error'.format(target))
         if options.debug:
@@ -68,22 +72,27 @@ if __name__ == '__main__':
     ua = UserAgent()
     for target in target_list:
         header = {'User-Agent':str(ua.chrome)}
+        response_is = ''
         try:
             if len(target) > 0:
                 x = requests.get('http://{}'.format(target), timeout=5, headers=header) # make an http request
-
+    
                 if options.i is not None:
                     if str(x.status_code) not in options.i: # check if our response is a code designated to be ignroed
-                        print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip())) # print our output
+                        if len(x.text) < 5:
+                            response_is = ' EMPTY PAGE'
+                        print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + response_is) # print our output
                         if options.o is not None:
                             with open(options.o, 'a') as f: # if options.o then save the target
-                                f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
+                                f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip())  + response_is + '\n')
                                 f.close()
                 else:
-                    print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()))
+                    if len(x.text) < 5:
+                        response_is = ' EMPTY PAGE'
+                    print(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + response_is)
                     if options.o is not None:
                         with open(options.o, 'a') as f:
-                            f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + '\n')
+                            f.write(x.url + " Status Code: " + str(x.status_code) + " Title: "+ str(re.search('(?<=<title>).+?(?=</title>)', x.text, re.DOTALL).group().strip()) + response_is + '\n')
                             f.close()
 
         except requests.exceptions.ConnectionError: # if the server is running https we should get this
@@ -94,7 +103,7 @@ if __name__ == '__main__':
             https_chk(target)
         except BaseException as e:
             if str(e).find('Max retries exceeded with url') != -1:
-                print('HTTP Host {} is not alive'.format(target))
+                print('HTTP Host {} Exceeded maximum retries'.format(target))
             else:
                 print('HTTP Host {} returned an error'.format(target))
             if options.debug:
