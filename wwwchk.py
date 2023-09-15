@@ -32,10 +32,11 @@ def https_chk(target):
     except KeyboardInterrupt:
             sys.exit(1)
     except BaseException as e:
-        if str(e).find('Max retries exceeded with url') != -1:
-            print('Host {} is not alive'.format(target))
-        else:
-            print('Host {} returned an error {}'.format(target, e))
+        if options.se:
+            if str(e).find('Max retries exceeded with url') != -1:
+                print('Host {} is not alive'.format(target))
+            else:
+                print('Host {} returned an error {}'.format(target, e))
         if options.debug:
             import traceback
 
@@ -50,6 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', action='store', help='Status codes to ignore list seperated by a comma eg 404,503,200')
     parser.add_argument('-o', action='store', help='output file')
     parser.add_argument('-debug', action='store_true', help='Turn on debugging')
+    parser.add_argument('-se', action='store_false', help='Skip any errors from printing')
 
 
     # Suppress only the single warning from urllib3 needed.
@@ -94,10 +96,11 @@ if __name__ == '__main__':
         except ConnectionResetError:
             https_chk(target)
         except BaseException as e:
-            if str(e).find('Max retries exceeded with url') != -1:
-                print('Host {} is not alive'.format(target))
-            else:
-                print('Host {} returned an error {}'.format(target, e))
+            if options.se:
+                if str(e).find('Max retries exceeded with url') != -1:
+                    print('Host {} is not alive'.format(target))
+                else:
+                    print('Host {} returned an error {}'.format(target, e))
             if options.debug:
                 import traceback
 
