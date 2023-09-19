@@ -1,6 +1,6 @@
 import sys
 try:
-    from passlib.hash import ntlm
+    from passlib.hash import nthash
 except BaseException:
     print('Missing passlib imstall with pip3 install passlib')
     sys.exit(1)
