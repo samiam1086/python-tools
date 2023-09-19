@@ -10,4 +10,5 @@ if __name__ == '__main__':
     if len(sys.argv) < 2 or '-h' in sys.argv or '--help' in sys.argv or '-help' in sys.argv:
         print('Usage: python3 passwd2ntlm.py \'password\'')
         sys.exit(0)
-    print(nthash.hash(sys.argv[1]))
+    print('password:nthash')
+    print('{}:{}'.format(sys.argv[1], nthash.hash(sys.argv[1])))
