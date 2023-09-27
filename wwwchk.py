@@ -76,9 +76,10 @@ if __name__ == '__main__':
         try:
             if len(target) > 0:
                 x = requests.get('http://{}'.format(target), timeout=5)  # make an http request
-
-                if x.status_code == 400:
+                
+                if x.text.find('HTTP request was sent to HTTPS port') != -1:
                     https_chk(target)
+                    continue
 
                 if options.i is not None:
                     if str(x.status_code) not in options.i:  # check if our response is a code designated to be ignroed
