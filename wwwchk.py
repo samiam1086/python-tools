@@ -76,8 +76,8 @@ if __name__ == '__main__':
         try:
             if len(target) > 0:
                 x = requests.get('http://{}'.format(target), timeout=5)  # make an http request
-                
-                if x.text.find('HTTP request was sent to HTTPS port') != -1:
+
+                if x.status_code == 400:
                     https_chk(target)
                     continue
 
