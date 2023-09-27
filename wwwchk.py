@@ -4,10 +4,26 @@ import requests
 import argparse
 import sys
 
+def sig_check(response_text):
+
+    signatures = {
+        # needs to be
+        # signature:what it is
+        'S1-ro-xs-xs-test':'S'
+    }
+    # Keys = item:
+    # values = :item
+    sig_keys = signatures.keys()
+
+    for key in sig_keys:
+        if response_text.find(key) != -1:
+            return sig_keys[key]
+
+    return ''
 
 def get_title(response_text):
     if response_text.find('<title') == -1:
-        return ''
+        return sig_check(response_text)
 
     tmp = response_text[response_text.find('<title'):]
     tmp1 = ' Title: ' + tmp[tmp.find('>') + 1:tmp.find('</title>')]
