@@ -8,35 +8,30 @@ import os
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Generates a large list of usernames for kerbrute")
     parser.add_argument('-mode', action='store', default='0', choices=['0', '1', '2', '3'], help='Select which type of username you want 0=First.Last 1==FirstletterLast 2=FirstletterMILast 3=ALL')
-    parser.add_argument('-o', '--outputfile', action='store', help='File to output your usernames to. Deafult=./usernames.txt')
-    parser.add_argument('-i', '--inputfile', action='store', help='Directory of SecLists/Usernames/Names EX: -i /opt/SecLists/Usernames/Names/ Default=/opt/SecLists/Usernames/Names/')
+    parser.add_argument('-o', default='./usernames.txt', action='store', help='File to output your usernames to. Deafult=./usernames.txt')
+    parser.add_argument('-inf', action='store', default='/opt/SecLists/Usernames/Names/names.txt', help='File of firstnames Default=/opt/SecLists/Usernames/Names/names.txt')
+    parser.add_argument('-il', action='store', default='/opt/SecLists/Usernames/Names/familynames-usa-top1000.txt', help='File of lastnames Default=/opt/SecLists/Usernames/Names/')
 
     if len(sys.argv) == 1:
         parser.print_help()
+        print('mode 0 requires firstname and lastname')
+        print('mode 1 requires lastname')
+        print('mode 2 requires firstname and lastname')
+        print('mode 3 requires firstname and lastname')
         sys.exit(1)
 
     options = parser.parse_args()
-
-    if options.outputfile is None:
-        outfile = "./usernames.txt"
-    else:
-        outfile = options.outputfile
-
-    if options.inputfile is None:
-        infile = "/opt/SecLists/Usernames/Names/"
-    else:
-        infile = options.inputfile
 
     lastnames = []
     firstnames = []
     lastnames_cleand = []
     firstnames_cleaned = []
     lowercase_letters = list(string.ascii_lowercase)
-    with open("{}names.txt".format(infile), 'r') as f:
+    with open(options.inf, 'r') as f:
         firstnames = f.readlines()
         f.close()
 
-    with open("{}familynames-usa-top1000.txt".format(infile), 'r') as f:
+    with open(options.il, 'r') as f:
         lastnames = f.readlines()
         f.close()
 
@@ -46,7 +41,7 @@ if __name__ == '__main__':
     for sub in lastnames:
         lastnames_cleand.append(sub.replace('\n', '').lower())
 
-    with open(outfile, 'a') as f:
+    with open(options.o, 'a') as f:
         if options.mode == '0' or options.mode == '3':
             for name in firstnames_cleaned:
                 for lname in lastnames_cleand:
@@ -67,9 +62,8 @@ if __name__ == '__main__':
 
     if options.mode == '3':
         if sys.platform == 'linux':
-            os.system('cat {} | sort -u > {}cleaned'.format(outfile, outfile))
-            os.system('rm {}'.format(outfile))
-            os.system('mv {}cleaned {}'.format(outfile, outfile))
+            os.system('cat {} | sort -u > {}cleaned'.format(options.o, options.o))
+            os.system('rm {}'.format(options.o))
+            os.system('mv {}cleaned {}'.format(options.o, options.o))
         else:
             print('WARNING this file is not uniq please sort and unique it')
-  
