@@ -121,6 +121,7 @@ if __name__ == '__main__':
                             except Exception as e:
                                 print(str(e))
                                 print('Error dumping secrets')
+                                continue
 
 
         else:
