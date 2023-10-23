@@ -6,6 +6,16 @@ except ImportError:
 
 import os, sys, json
 
+color_RED = '\033[91m'
+color_GRE = '\033[92m'
+color_YELL = '\033[93m'
+color_BLU = '\033[94m'
+color_PURP = '\033[35m'
+color_reset = '\033[0m'
+green_plus = "{}[+]{}".format(color_GRE, color_reset)
+red_minus = "{}[-]{}".format(color_RED, color_reset)
+gold_plus = "{}[+]{}".format(color_YELL, color_reset)
+red_exclm = "{}[!]{}".format(color_RED, color_reset)
 
 cwd = os.path.abspath(os.path.dirname(__file__))
 dumped_ips = []
@@ -53,7 +63,7 @@ if __name__ == '__main__':
 
     if os.path.isdir(cwd + "/loot") == False:
         os.makedirs(cwd + "/loot")
-        
+
     config_check()
 
     if os.path.isfile('secretsdump.py') == False:
