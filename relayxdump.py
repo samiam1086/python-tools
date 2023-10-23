@@ -10,11 +10,56 @@ import os, sys, json
 cwd = os.path.abspath(os.path.dirname(__file__))
 dumped_ips = []
 
+
+def config_check():
+    fail = 0
+    sockfail = 0
+    print('{}[{}Checking proxychains configs{}]{}'.format(color_BLU, color_reset, color_BLU, color_reset))
+    try:
+        with open('/etc/proxychains.conf', 'r') as f:
+            dat = f.read()
+            f.close()
+
+        if dat.find('127.0.0.1 1080') == -1:
+            sockfail += 1
+
+    except FileNotFoundError as e:
+        fail += 1
+
+    try:
+        with open('/etc/proxychains4.conf', 'r') as f:
+            dat = f.read()
+            f.close()
+
+        if dat.find('127.0.0.1 1080') == -1:
+            sockfail += 1
+
+    except FileNotFoundError as e:
+        fail += 1
+
+    if fail == 2:
+        print('{} ERROR you are missing proxychains config'.format(red_minus))
+        sys.exit(1)
+
+    if sockfail >= 1:
+        print('{} ERROR you are missing "socks4  127.0.0.1 1080" in your proxychains config'.format(red_minus))
+        sys.exit(1)
+
 if __name__ == '__main__':
+
+    if os.geteuid() != 0:
+        print("{} Must be run as sudo".format(red_exclm))
+        sys.exit(1)
+
+    if os.path.isdir(cwd + "/loot") == False:
+        os.makedirs(cwd + "/loot")
+        
+    config_check()
+
     if os.path.isfile('secretsdump.py') == False:
         print('Missing secretsdump.py in current directory')
         sys.exit(1)
-        
+
     if os.path.isfile('dumped_ips'):
         with open('dumped_ips', 'r') as f:
             dat = f.read()
@@ -64,4 +109,3 @@ if __name__ == '__main__':
 
         else:
             print('No Relays Available!')
-            
