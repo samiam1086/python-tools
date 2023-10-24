@@ -4,7 +4,7 @@ try:
 except ImportError:
     from urllib2 import ProxyHandler, build_opener, Request
 
-import os, sys, json
+import os, sys, json, subprocess
 import concurrent.futures
 
 color_RED = '\033[91m'
@@ -25,9 +25,18 @@ dumped_ips = []
 def config_check():
     fail = 0
     sockfail = 0
-    print('{}[{}Checking proxychains configs{}]{}'.format(color_BLU, color_reset, color_BLU, color_reset))
+    print('{}[{}Checking proxychains config{}]{}'.format(color_BLU, color_reset, color_BLU, color_reset))
+    # this will get the location of the config file proxychains is using
+    proc = subprocess.run(['proxychains -h'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    dat = proc.stderr.decode().split('\n')
+
+    for line in dat:
+        if line.find('config file found') != -1:
+            config_file = line[line.find(':') + 2:]
+
     try:
-        with open('/etc/proxychains.conf', 'r') as f:
+        with open(config_file, 'r') as f:
             dat = f.read()
             f.close()
 
@@ -37,24 +46,16 @@ def config_check():
     except FileNotFoundError as e:
         fail += 1
 
-    try:
-        with open('/etc/proxychains4.conf', 'r') as f:
-            dat = f.read()
-            f.close()
 
-        if dat.find('127.0.0.1 1080') == -1:
-            sockfail += 1
-
-    except FileNotFoundError as e:
-        fail += 1
-
-    if fail == 2:
+    if fail == 1:
         print('{} ERROR you are missing proxychains config'.format(red_minus))
         sys.exit(1)
 
     if sockfail >= 1:
         print('{} ERROR you are missing "socks4  127.0.0.1 1080" in your proxychains config'.format(red_minus))
         sys.exit(1)
+
+    print('\n{}[{}Config looks good{}]{}'.format(color_BLU, color_reset, color_BLU, color_reset))
 
 
 def mt_execute(username, ip):
@@ -108,6 +109,7 @@ if __name__ == '__main__':
 
             if os.path.isdir(cwd + "/loot") == False:
                 os.makedirs(cwd + "/loot")
+            
             with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor: # multithreading yeahhhh
                 for item in tmp:
                     dat = item.replace(']', '').split(',')
