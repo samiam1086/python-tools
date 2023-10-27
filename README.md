@@ -39,3 +39,7 @@ smbexec-multi will execute a command on multiple machines at once (non interacti
 ## wwwchk.py
 
 wwwchk is a tool that will take a list of IPs or IP:Ports and see if they are hosting a webpage there printing the response code. This is useful if you are needing to check a lot of IPs and need to filter out undesirable response codes like 404 and 403 quickly. 
+
+## relayxdump.py
+
+relayxdump.py is a tool to be used in conjunction with ntlmrelayx.py from impacket to dump SAM and LSA Secrets from any relays that you have admin to This requires either crackmapexec to be installed or for you to point the tool to a secretsdump.py file with impacket installed.
