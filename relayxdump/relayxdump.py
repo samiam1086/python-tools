@@ -75,6 +75,21 @@ def mt_execute(username, ip, method, secretsdump_path, local_uname):
         f.close()
 
 
+def check_uname():
+    username = input('Enter your username: ')
+    with open('/etc/passwd', 'r') as f:
+        dat = f.readlines()
+        f.close()
+    passwd_usernames = ''
+    for item in dat:
+        passwd_usernames = passwd_usernames + ' ' + str(item.split(':')[0])
+
+    if username in passwd_usernames:
+        return username
+    else:
+        print('{} Username does not exist in /etc/passwd'.format(red_minus))
+        check_uname()
+
 if __name__ == '__main__':
 
     if os.geteuid() != 0:
@@ -98,7 +113,7 @@ if __name__ == '__main__':
     config_check()
     local_uname = ''
     if options.method == 'crackmapexec':
-        local_uname = input('Enter your username: ')
+        local_uname = check_uname()
 
     if options.method == 'secretsdump' and os.path.isfile(options.sdp) == False:
         print('Missing secretsdump.py')
