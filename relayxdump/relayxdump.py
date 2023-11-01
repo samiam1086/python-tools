@@ -84,7 +84,7 @@ def check_uname():
     for item in dat:
         passwd_usernames = passwd_usernames + ' ' + str(item.split(':')[0])
 
-    if username in passwd_usernames:
+    if username in passwd_usernames and username != '' and username != ' ':
         return username
     else:
         print('{} Username does not exist in /etc/passwd'.format(red_minus))
