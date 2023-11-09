@@ -60,7 +60,7 @@ from impacket import version, smbserver
 from impacket.dcerpc.v5 import transport, scmr
 from impacket.krb5.keytab import Keytab
 
-OUTPUT_FILENAME = '__output'
+OUTPUT_FILENAME = ''.join(random.choices(string.ascii_uppercase, k=random.randrange(8, 25)))
 BATCH_FILENAME = ''.join(random.choices(string.ascii_uppercase, k=random.randrange(8, 15))) + '.bat'
 SERVICE_NAME = ''.join(random.choices(string.ascii_uppercase, k=random.randrange(8, 15)))
 CODEC = sys.stdout.encoding
@@ -114,7 +114,7 @@ class RemoteShell():
     def __init__(self, share, rpc, serviceName, shell_type):
 
         self.__share = share
-        self.__output = '\\\\127.0.0.1\\' + self.__share + '\\' + OUTPUT_FILENAME
+        self.__output = '\\\\%COMPUTERNAME%\\' + self.__share + '\\' + OUTPUT_FILENAME
         self.__batchFile = '%TEMP%\\' + BATCH_FILENAME
         self.__outputBuffer = b''
         self.__command = ''
@@ -227,23 +227,26 @@ class RemoteShell():
             self.__outputBuffer = b''
             return dat_out
         except UnicodeDecodeError:
-            logging.error('Decoding error detected, consider running chcp.com at the target,\nmap the result with '
-                          'https://docs.python.org/3/library/codecs.html#standard-encodings\nand then execute smbexec.py '
-                          'again with -codec and the corresponding codec')
+            if options.silent == False:
+                logging.error('Decoding error detected, consider running chcp.com at the target,\nmap the result with '
+                              'https://docs.python.org/3/library/codecs.html#standard-encodings\nand then execute smbexec.py '
+                              'again with -codec and the corresponding codec')
             print(self.__outputBuffer.decode(CODEC, errors='replace'))
         self.__outputBuffer = b''
 
 
 # Process command-line arguments.
 if __name__ == '__main__':
-    print(version.BANNER)
 
-    print('WARNING: The multiple command at once feature is extremely basic and has no error checking besides preventing overwriting of a mounted network drive')
+    if '-silent' not in str(sys.argv):
+        print(version.BANNER)
+        print('WARNING: The multiple command at once feature is extremely basic and has no error checking besides preventing overwriting of a mounted network drive')
 
     parser = argparse.ArgumentParser()
 
     parser.add_argument('target', action='store', help='[[domain/]username[:password]@]<targetName or address>')
     parser.add_argument('command', action='store', help='commandtorun')
+    parser.add_argument('-silent', action='store_true', help='silent mode no banner output or anything')
     parser.add_argument('-share', action='store', default='C$', help='share where the output will be grabbed from '
                                                                      '(default C$)')
     parser.add_argument('-ts', action='store_true', help='adds timestamp to every logging output')
