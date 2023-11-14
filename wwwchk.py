@@ -14,7 +14,10 @@ def sig_check(response_text):
         'window.location.pathname=\'camera/index.html\'':'AXIS',
         'src=js/iLO.js':'HP ILO',
         'iLOGlobal.topPage = me.topPage;':'HP ILO',
-        'URL=\'/ui\'':'VMWARE'
+        'URL=\'/ui\'':'VMWARE',
+        '/internalLib/SNC':'Sony Network Camera',
+        'nmbl-gui/config/environment':'HPE Nimble Storage',
+        'nmblOemName':'HPE Nimble Storage'
     }
     # Keys = item:
     # values = :item
