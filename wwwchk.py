@@ -13,6 +13,7 @@ def sig_check(response_text):
         'URL=/aca/index.html':'AXIS',
         'window.location.pathname=\'camera/index.html\'':'AXIS',
         'src=js/iLO.js':'HP ILO',
+        'iLOGlobal.topPage = me.topPage;':'HP ILO',
         'URL=\'/ui\'':'VMWARE'
     }
     # Keys = item:
@@ -31,6 +32,7 @@ def get_title(response_text):
 
     tmp = response_text[response_text.find('<title'):]
     tmp1 = ' Title: ' + tmp[tmp.find('>') + 1:tmp.find('</title>')]
+    tmp1 = tmp1.replace('\n', '')
     return tmp1
 
 
