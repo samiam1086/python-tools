@@ -31,6 +31,8 @@ def get_title(response_text):
         return sig_check(response_text)
 
     tmp = response_text[response_text.find('<title'):]
+    if len(tmp[tmp.find('>') + 1:tmp.find('</title>')]) < 2:
+        return sig_check(response_text)
     tmp1 = ' Title: ' + tmp[tmp.find('>') + 1:tmp.find('</title>')]
     tmp1 = tmp1.replace('\n', '')
     return tmp1
