@@ -9,7 +9,11 @@ def sig_check(response_text):
     signatures = {
         # needs to be
         # signature:what it is
-        'S1-ro-xs-xs-test':'S'
+        'S1-ro-xs-xs-test':'S',
+        'URL=/aca/index.html':'AXIS',
+        'window.location.pathname=\'camera/index.html\'':'AXIS',
+        'src=js/iLO.js':'HP ILO',
+        'URL=\'/ui\'':'VMWARE'
     }
     # Keys = item:
     # values = :item
