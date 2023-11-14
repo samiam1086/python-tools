@@ -21,7 +21,7 @@ def sig_check(response_text):
 
     for key in sig_keys:
         if response_text.find(key) != -1:
-            return sig_keys[key]
+            return signatures[key]
 
     return ''
 
