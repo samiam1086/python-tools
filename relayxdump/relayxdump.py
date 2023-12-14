@@ -81,7 +81,8 @@ def mt_execute(username, ip, method, secretsdump_path, local_uname):
 
 
 def check_uname():
-    given_username = input('Enter your attacker machine username: ')
+    print('Enter your attacker machine username ex. kali (this is where cme or netexec will store your loot in the home dir of whatever username you give ~/.cme/logs)')
+    given_username = input('Username: ')
     with open('/etc/passwd', 'r') as f:
         dat = f.readlines()
         f.close()
@@ -89,7 +90,7 @@ def check_uname():
     passwd_usernames = []
     for item in dat:
         passwd_usernames.append(str(item.split(':')[0]))
-    
+
     # iterates through the passwd_usernames list and sees if the given username is equal to any in it
     for name in passwd_usernames:
         if given_username == name:
