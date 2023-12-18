@@ -42,7 +42,7 @@ def config_check():
             f.close()
 
         if dat.find('socks4 127.0.0.1 1080') == -1 or dat.find('#socks4 127.0.0.1 1080') != -1 or dat.find('# socks4 127.0.0.1 1080') != -1:
-            print('{} ERROR you are missing "socks4  127.0.0.1 1080" in your proxychains config'.format(red_minus))
+            print('{} ERROR you are missing "socks4 127.0.0.1 1080" in your proxychains config'.format(red_minus))
             sys.exit(1)
 
     except FileNotFoundError as e:
