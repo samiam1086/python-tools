@@ -94,7 +94,7 @@ def check_uname():
     # iterates through the passwd_usernames list and sees if the given username is equal to any in it
     for name in passwd_usernames:
         if given_username == name:
-            return passwd_usernames
+            return given_username
 
     print('{} Username does not exist in /etc/passwd'.format(red_minus))
     check_uname()
