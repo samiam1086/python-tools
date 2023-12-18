@@ -32,6 +32,8 @@ def sig_check(response_text):
     return ''
 
 def get_title(response_text):
+    if len(response_text) < 5:
+        return ' Blank Page'
     if response_text.lower().find('<title') == -1: # if there is no title to the page check if we have a signature for it
         return sig_check(response_text)
     if sig_check(response_text) != '': # go off of signature first
