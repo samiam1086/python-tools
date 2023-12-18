@@ -17,7 +17,8 @@ def sig_check(response_text):
         'URL=\'/ui\'':'VMWARE',
         '/internalLib/SNC':'Sony Network Camera',
         'nmbl-gui/config/environment':'HPE Nimble Storage',
-        'nmblOemName':'HPE Nimble Storage'
+        'nmblOemName':'HPE Nimble Storage',
+        'Cisco IP Phone':'Cisco IP Phone'
     }
     # Keys = item:
     # values = :item
