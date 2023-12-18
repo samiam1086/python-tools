@@ -18,7 +18,8 @@ def sig_check(response_text):
         '/internalLib/SNC':'Sony Network Camera',
         'nmbl-gui/config/environment':'HPE Nimble Storage',
         'nmblOemName':'HPE Nimble Storage',
-        'Cisco IP Phone':'Cisco IP Phone'
+        'Cisco IP Phone':'Cisco IP Phone',
+        'Cisco Unified IP Phone': 'Cisco Unified IP Phone'
     }
     # Keys = item:
     # values = :item
