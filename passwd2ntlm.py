@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
         print('password:nthash')
         for password in dat: # iterate through the dat array
-            print('{}:{}'.format(password[:len(password)], nthash.hash(password[:len(password)]))) # convert the 'passwd\n' to 'passwd' and make it an nt hash
+            print('{}:{}'.format(password[:len(password)-1], nthash.hash(password[:len(password)-1]))) # convert the 'passwd\n' to 'passwd' and make it an nt hash
     else:
         print('password:nthash')
         print('{}:{}'.format(sys.argv[1], nthash.hash(sys.argv[1])))
