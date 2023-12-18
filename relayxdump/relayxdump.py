@@ -50,10 +50,6 @@ def config_check():
         sys.exit(1)
 
 
-    if sockfail >= 1:
-        print('{} ERROR you are missing "socks4  127.0.0.1 1080" in your proxychains config'.format(red_minus))
-        sys.exit(1)
-
     print('\n{}[{}Config looks good{}]{}'.format(color_BLU, color_reset, color_BLU, color_reset))
 
 
