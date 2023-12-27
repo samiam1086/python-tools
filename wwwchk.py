@@ -1,5 +1,7 @@
 from urllib3.exceptions import InsecureRequestWarning
+from concurrent.futures import ThreadPoolExecutor
 from requests import ConnectionError
+import concurrent.futures
 import requests
 import argparse
 import sys
@@ -77,6 +79,46 @@ def https_chk(target):
             traceback.print_exc()
         pass
 
+def mt_execute(target):
+    try:
+        if len(target) > 0:
+            x = requests.get('http://{}'.format(target), timeout=5)  # make an http request
+
+            if x.status_code == 400:
+                https_chk(target)
+                return
+
+            if options.i is not None:
+                if str(x.status_code) not in options.i:  # check if our response is a code designated to be ignroed
+                    print(x.url + " Status Code: " + str(x.status_code) + get_title(x.text))  # print our output
+                    if options.o is not None:
+                        with open(options.o, 'a') as f:  # if options.o then save the target
+                            f.write(x.url + " Status Code: " + str(x.status_code) + get_title(x.text) + '\n')
+                            f.close()
+            else:
+                print(x.url + " Status Code: " + str(x.status_code) + get_title(x.text))
+                if options.o is not None:
+                    with open(options.o, 'a') as f:
+                        f.write(x.url + " Status Code: " + str(x.status_code) + get_title(x.text) + '\n')
+                        f.close()
+    except KeyboardInterrupt:
+        sys.exit(1)
+    except requests.exceptions.ConnectionError:  # if the server is running https we should get this
+        https_chk(target)
+    except ConnectionResetError:
+        https_chk(target)
+    except BaseException as e:
+        if options.se:
+            if str(e).find('Max retries exceeded with url') != -1:
+                print('Host {} is not alive'.format(target))
+            else:
+                print('Host {} returned an error {}'.format(target, e))
+        if options.debug:
+            import traceback
+
+            traceback.print_exc()
+            return
+
 
 if __name__ == '__main__':
 
@@ -86,6 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', action='store', help='output file')
     parser.add_argument('-debug', action='store_true', help='Turn on debugging')
     parser.add_argument('-se', action='store_false', help='Skip any errors from printing')
+    parser.add_argument('-threads', action='store', default=5, help='Threads to use for multithreading Default=5')
 
     # Suppress only the single warning from urllib3 needed.
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -103,43 +146,6 @@ if __name__ == '__main__':
 
     if options.i is not None:  # if they gave us an options.i lets make it a list the split function does not cause issues if there is no comma it will just appear as 1 string in the list
         options.i = options.i.split(',')
-
-    for target in target_list:
-        try:
-            if len(target) > 0:
-                x = requests.get('http://{}'.format(target), timeout=5)  # make an http request
-
-                if x.status_code == 400:
-                    https_chk(target)
-                    continue
-
-                if options.i is not None:
-                    if str(x.status_code) not in options.i:  # check if our response is a code designated to be ignroed
-                        print(x.url + " Status Code: " + str(x.status_code) + get_title(x.text))  # print our output
-                        if options.o is not None:
-                            with open(options.o, 'a') as f:  # if options.o then save the target
-                                f.write(x.url + " Status Code: " + str(x.status_code) + get_title(x.text) + '\n')
-                                f.close()
-                else:
-                    print(x.url + " Status Code: " + str(x.status_code) + get_title(x.text))
-                    if options.o is not None:
-                        with open(options.o, 'a') as f:
-                            f.write(x.url + " Status Code: " + str(x.status_code) + get_title(x.text) + '\n')
-                            f.close()
-        except KeyboardInterrupt:
-            sys.exit(1)
-        except requests.exceptions.ConnectionError:  # if the server is running https we should get this
-            https_chk(target)
-        except ConnectionResetError:
-            https_chk(target)
-        except BaseException as e:
-            if options.se:
-                if str(e).find('Max retries exceeded with url') != -1:
-                    print('Host {} is not alive'.format(target))
-                else:
-                    print('Host {} returned an error {}'.format(target, e))
-            if options.debug:
-                import traceback
-
-                traceback.print_exc()
-            continue
+    with ThreadPoolExecutor(max_workers=options.threads) as executor:
+        for target in target_list:
+            executor.submit(mt_execute, target)
