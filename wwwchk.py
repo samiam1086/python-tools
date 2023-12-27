@@ -128,7 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', action='store', help='output file')
     parser.add_argument('-debug', action='store_true', help='Turn on debugging')
     parser.add_argument('-se', action='store_false', help='Skip any errors from printing')
-    parser.add_argument('-threads', action='store', default=5, help='Threads to use for multithreading Default=5')
+    parser.add_argument('-threads', action='store', default=5, type=int, help='Threads to use for multithreading Default=5')
 
     # Suppress only the single warning from urllib3 needed.
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
