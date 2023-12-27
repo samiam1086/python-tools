@@ -11,17 +11,19 @@ def sig_check(response_text):
     signatures = {
         # needs to be
         # signature:what it is
-        'S1-ro-xs-xs-test':'S',
-        'URL=/aca/index.html':'AXIS',
-        'window.location.pathname=\'camera/index.html\'':'AXIS',
-        'src=js/iLO.js':'HP ILO',
-        'iLOGlobal.topPage = me.topPage;':'HP ILO',
-        'URL=\'/ui\'':'VMWARE',
-        '/internalLib/SNC':'Sony Network Camera',
-        'nmbl-gui/config/environment':'HPE Nimble Storage',
-        'nmblOemName':'HPE Nimble Storage',
-        'Cisco IP Phone':'Cisco IP Phone',
-        'Cisco Unified IP Phone': 'Cisco Unified IP Phone'
+        'S1-ro-xs-xs-test': 'S',
+        'URL=/aca/index.html': 'AXIS Camera',
+        'window.location.pathname=\'camera/index.html\'': 'AXIS Camera',
+        'src=js/iLO.js': 'HP ILO',
+        'iLOGlobal.topPage = me.topPage;': 'HP ILO',
+        'URL=\'/ui\'': 'VMWARE',
+        '/internalLib/SNC': 'Sony Network Camera',
+        'nmbl-gui/config/environment': 'HPE Nimble Storage',
+        'nmblOemName': 'HPE Nimble Storage',
+        'Cisco IP Phone': 'Cisco IP Phone',
+        'Cisco Unified IP Phone': 'Cisco Unified IP Phone',
+        '<div id="pgm-theatre-staging-div">': 'HP Printer',
+        '<div ng-view=': 'Wisenet'
     }
     # Keys = item:
     # values = :item
