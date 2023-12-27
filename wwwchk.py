@@ -22,8 +22,8 @@ def sig_check(response_text):
         'nmblOemName': 'HPE Nimble Storage',
         'Cisco IP Phone': 'Cisco IP Phone',
         'Cisco Unified IP Phone': 'Cisco Unified IP Phone',
-        '<div id="pgm-theatre-staging-div">': 'HP Printer',
-        '<div ng-view=': 'Wisenet'
+        '<div id="pgm-theatre-staging-div">': 'HP Printer', # not overly sure about this signature
+        '<div ng-view=': 'Wisenet' # not overly sure about this signature
     }
     # Keys = item:
     # values = :item
