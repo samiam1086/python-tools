@@ -28,7 +28,8 @@ def sig_check(response_text):
         'netbotz':'Netbotz Camera',
         'location.hostname+pt+redirect_suffix':'QNAP NAS',
         'url = url + \'&bj4=\' + md5(url.split(\'?\')[1]);':'Netgear Device',
-        'client.get(\'/bannercontents.txt\')':'Crestron Login Page'
+        'client.get(\'/bannercontents.txt\')':'Crestron Login Page',
+        'webpackJsonpquickconnect=this.webpackJsonpquickconnect':'Solstice Quick Connect'
     }
     # Keys = item:
     # values = :item
