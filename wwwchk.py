@@ -24,10 +24,11 @@ def sig_check(response_text):
         'Cisco Unified IP Phone': 'Cisco Unified IP Phone',
         '<div id="pgm-theatre-staging-div">': 'HP Printer', # not overly sure about this signature
         '<div ng-view=': 'Wisenet', # not overly sure about this signature
-        'url =\'/webui\'':'Cisco Device',
+        'url =\'/webui\'':'Cisco Device Login Page',
         'netbotz':'Netbotz Camera',
         'location.hostname+pt+redirect_suffix':'QNAP NAS',
-        'url = url + \'&bj4=\' + md5(url.split(\'?\')[1]);':'Netgear Device'
+        'url = url + \'&bj4=\' + md5(url.split(\'?\')[1]);':'Netgear Device',
+        'client.get(\'/bannercontents.txt\')':'Crestron Login Page'
     }
     # Keys = item:
     # values = :item
