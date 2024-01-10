@@ -407,7 +407,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help = True, description = "Performs various techniques to dump secrets from "
                                                       "the remote machine without executing any agent there.")
 
-    parser.add_argument('target', action='store', help='[[domain/]username[:password]@]<targetName or address> or LOCAL'
+    parser.add_argument('target', action='store', help='[[domain/]username[:password]@]<targetName or address, filename with ips> or LOCAL'
                                                        ' (if you want to parse local files)')
     parser.add_argument('-ts', action='store_true', help='Adds timestamp to every logging output')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
