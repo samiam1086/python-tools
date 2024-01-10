@@ -29,7 +29,8 @@ def sig_check(response_text):
         'location.hostname+pt+redirect_suffix':'QNAP NAS',
         'url = url + \'&bj4=\' + md5(url.split(\'?\')[1]);':'Netgear Device',
         '/bannercontents.txt':'Crestron Login Page',
-        'webpackJsonpquickconnect=this.webpackJsonpquickconnect':'Solstice Quick Connect'
+        'webpackJsonpquickconnect=this.webpackJsonpquickconnect':'Solstice Quick Connect',
+        '../index.html?clientIpAddr=':'Univision IP Camera Login'
     }
     # Keys = item:
     # values = :item
