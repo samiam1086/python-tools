@@ -31,7 +31,7 @@ def sig_check(response_text):
         'url = url + \'&bj4=\' + md5(url.split(\'?\')[1]);':'Netgear Device',
         '/bannercontents.txt':'Crestron Login Page',
         'webpackJsonpquickconnect=this.webpackJsonpquickconnect':'Solstice Quick Connect',
-        '../index.html?clientIpAddr=':'Univision IP Camera Login',
+        '../index.htm?clientIpAddr=':'Univision IP Camera Login',
         'document.location.replace(\'./home/monitoring.cgi':'Samsung Network Camera'
     }
     # Keys = item:
