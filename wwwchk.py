@@ -14,6 +14,7 @@ def sig_check(response_text):
         'S1-ro-xs-xs-test': 'S',
         'URL=/aca/index.html': 'AXIS Camera',
         'window.location.pathname=\'camera/index.html\'': 'AXIS Camera',
+        '; URL=/camera/index.html"':'Axis Camera',
         'src=js/iLO.js': 'HP ILO',
         'iLOGlobal.topPage = me.topPage;': 'HP ILO',
         'URL=\'/ui\'': 'VMWARE',
