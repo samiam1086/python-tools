@@ -102,20 +102,16 @@ def send_llmnr_query(host, local_ip, debug):
         if response.answer: # if we got a response llmnr is present on the host
             llmnr_log(host) # log the host ip
             if debug: # if we are debugging give the actual llmnr response
-                try: # try to return the hostname next to the ip and then the llmnr response
-                    return 'Host: {} {}\nLLMNR Response: {}\n'.format(host,response.answer[0].to_text().split(' ')[4][:len(response.answer[0].to_text().split(' ')[4])-1], response.answer[0].to_text())
-                except: # otherwise just return the ip and llmnr response
-                    return 'Host: {}\nLLMNR Response: {}\n'.format(host, response.answer[0].to_text())
-
+                return 'LLMNR Response: {}\n'.format(response.answer[0].to_text())
             else: # if were not debugging just return yes
-                return 'Host: {}'.format(host) + '\nLLMNR:'.ljust(11) + '{}YES{}\n'.format(color_RED, color_reset)
+                return 'LLMNR:'.ljust(11) + '{}YES{}\n'.format(color_RED, color_reset)
         else: # if no response was given then llmnr is closed
-            return 'Host: {}'.format(host) + '\nLLMNR:'.ljust(11) + '{}NO{}\n'.format(color_GRE, color_reset)
+            return 'LLMNR:'.ljust(11) + '{}NO{}\n'.format(color_GRE, color_reset)
     except Exception as e: # we got an error
         if debug: # if were debugging give the actual error
-            return 'Host: {}\nLLMNR Response: {}\n'.format(host, str(e))
+            return 'LLMNR Response: {}\n'.format(str(e))
         else: # otherwise just return no as llmnr is likely closed
-            return 'Host: {}'.format(host) + '\nLLMNR:'.ljust(11) + '{}NO{}\n'.format(color_GRE, color_reset)
+            return 'LLMNR:'.ljust(11) + '{}NO{}\n'.format(color_GRE, color_reset)
 
 
 def netbios_scan(host, debug): # scan for netbios using nbtscan
@@ -135,6 +131,7 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
 def mt_execute(host, local_ip, debug): # allows for multithreading
 
     out_data = '' # initialize our string
+    out_data += 'Host: {}\n'.format(host)
     out_data += send_llmnr_query(host, local_ip, debug) # check llmnr
     out_data += 'NetBIOS:'.ljust(10) + '{}\n'.format(netbios_scan(host, debug)) # check netbios
     out_data += send_mdns_query(host, local_ip, debug) # check mdns
