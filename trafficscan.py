@@ -172,7 +172,7 @@ def scan_hosts(hosts, output_file, local_ip, threads, debug): # scan our hosts w
 
 def check_write_perms(): # checks if we can write to the location that our logs end up to ensure there are no errors
     try:
-        with open('test', 'w') as f:
+        with open('test_xzngfejwoeigj11jw', 'w') as f:
             f.write('1')
             f.close()
     except PermissionError:
