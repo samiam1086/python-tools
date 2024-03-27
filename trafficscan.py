@@ -179,7 +179,7 @@ def check_write_perms(): # checks if we can write to the location that our logs 
         print('Permission Error you likely just need to run this as sudo')
         sys.exit(1)
     else:
-        os.remove('test')
+        os.remove('test_xzngfejwoeigj11jw')
 
 
 if __name__ == "__main__":
