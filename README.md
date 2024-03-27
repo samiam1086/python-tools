@@ -47,3 +47,7 @@ relayxdump.py is a tool to be used in conjunction with ntlmrelayx.py from impack
 ## llmnr-scanner.py
 
 llmnr-scanner.py is a tool that will check a remote host to see if it is allowing LLMNR traffic that may make it vulnerable to network poisoning attacks. Note you need to be on a close subnet to the host does not need to be the same one but enough distance and it seems to fail.
+
+## trafficscan.py
+
+this tool does the same as llmnr-scanner.py but includes checks for mdns and netbios. It only requires nbtscan to be installed and the python imports it uses.
