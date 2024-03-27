@@ -43,3 +43,7 @@ wwwchk is a tool that will take a list of IPs or IP:Ports and see if they are ho
 ## relayxdump.py
 
 relayxdump.py is a tool to be used in conjunction with ntlmrelayx.py from impacket to dump SAM and LSA Secrets from any relays that you have admin to This requires either crackmapexec to be installed or for you to point the tool to a secretsdump.py file with impacket installed.
+
+## llmnr-scanner.py
+
+llmnr-scanner.py is a tool that will check a remote host to see if it is allowing LLMNR traffic that may make it vulnerable to network poisoning attacks. Note you need to be on a close subnet to the host does not need to be the same one but enough distance and it seems to fail.
