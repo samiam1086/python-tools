@@ -2,7 +2,6 @@ import concurrent.futures
 import netifaces as ni
 import socket, errno
 import dns.message
-import subprocess
 import ipaddress
 import dns.query
 import binascii
