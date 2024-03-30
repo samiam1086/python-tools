@@ -50,4 +50,4 @@ llmnr-scanner.py is a tool that will check a remote host to see if it is allowin
 
 ## trafficscan.py
 
-this tool does the same as llmnr-scanner.py but includes checks for mdns and netbios. It only requires nbtscan to be installed and the python imports it uses.
+this tool does the same as llmnr-scanner.py but includes checks for mdns and netbios. It only requires the python imports it uses and python.
