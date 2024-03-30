@@ -5,6 +5,7 @@ import dns.message
 import subprocess
 import ipaddress
 import dns.query
+import binascii
 import argparse
 import random
 import sys
@@ -59,7 +60,7 @@ def send_mdns_query(host, local_ip, debug):
             ipiu = is_port_in_use(src_port)
 
         if debug: # debug prints
-            print('Sending Query for: {}:5353 from {}:{}'.format(host, local_ip, src_port))
+            print('Sending MDNS Query for: {}:5353 from {}:{}'.format(host, local_ip, src_port))
 
         query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN) # make our dns query
         response = dns.query.udp(query, '224.0.0.251', port=5353, timeout=5, source=local_ip, source_port=src_port) # send the query
@@ -94,7 +95,7 @@ def send_llmnr_query(host, local_ip, debug):
             ipiu = is_port_in_use(src_port)
 
         if debug: # verbose debugging
-            print('Sending Query for: {}:5355 from {}:{}'.format(host, local_ip, src_port))
+            print('Sending LLMNR Query for: {}:5355 from {}:{}'.format(host, local_ip, src_port))
 
         query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN) # make our dns query
         response = dns.query.udp(query, '224.0.0.252', port=5355, timeout=5, source=local_ip, source_port=src_port) # send the dns query to the victim
@@ -115,17 +116,60 @@ def send_llmnr_query(host, local_ip, debug):
 
 
 def netbios_scan(host, debug): # scan for netbios using nbtscan
-    cmd_out = subprocess.getoutput('nbtscan {} -s \' \' | cut -d \' \' -f 1,2'.format(host)) # run nbtscan and get its output + some grep magik
-    if not debug: # if were not debugging
-        if len(cmd_out) < 3: # and the length of nbtscan was less than 3 (we got no response) then netbios is closed
-            cmd_out = '{}NO{}'.format(color_GRE, color_reset)
-        else: # otherwise its open and we can return yes
-            cmd_out = '{}YES{}'.format(color_RED, color_reset)
-            netbios_log(host) # log it
-    elif len(cmd_out) < 3: # if we are debugging and the length is less than 3 (we got no response) return none otherwise just return what nbtscan gave us
-        cmd_out = 'NONE'
+    # NetBIOS-NS packet structure: Transaction ID, Flags, Questions, Answer RRs, Authority RRs, Additional RRs, Name, Type, Class, TTL, Length, Number of names
+    message = b'\x00\x00' + b'\x00\x10' + b'\x00\x01' + b'\x00\x00' + b'\x00\x00' + b'\x00\x00' + b'\x20' + b'CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' + b'\x00' + b'\x00\x21' + b'\x00\x01'
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(5)
 
-    return cmd_out
+    try:
+        sock.sendto(message, (host, 137))
+        data = sock.recvfrom(1024)
+        data = data[0]
+    except socket.timeout:
+        sock.close()
+        if debug:
+            return f"Timeout during communication with {host}\n"
+        else:
+            return '{}NO{}\n'.format(color_GRE, color_reset)
+
+    except Exception as e:
+        sock.close()
+        if debug:
+            return f"Error during communication: {e}\n"
+        else:
+            return '{}NO{}\n'.format(color_GRE, color_reset)
+
+    else:
+        sock.close()
+        if debug:
+            # Parse response
+            if len(data) < 57:  # Basic validation
+                return "Invalid response length\n"
+
+            # The NetBIOS Name
+            try: # attempts to get the netbios name if we fail to decode just let em know
+                netbiosname = data[57:57 + 15].decode('ascii').strip()
+            except UnicodeDecodeError:
+                try:
+                    netbiosname = data[57:57 + 15].decode('utf-8').strip()
+                except UnicodeDecodeError:
+                    netbiosname = 'Failed to decode'
+
+            # MAC address starts at byte 57+15+2=74, 6 bytes long
+            try:
+                macaddress = binascii.hexlify(data[74:80]).decode('ascii')
+                macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
+            except UnicodeDecodeError:
+                try:
+                    macaddress = binascii.hexlify(data[74:80]).decode('ascii')
+                    macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
+                except UnicodeDecodeError:
+                    macaddress_formatted = 'Failed to decode'
+
+
+            return f"NetBIOS Name: '{netbiosname}'" + f" MAC Address: '{macaddress_formatted}'\n"
+        else:
+            return '{}YES{}\n'.format(color_RED, color_reset)
 
 
 def mt_execute(host, local_ip, debug): # allows for multithreading
@@ -133,7 +177,7 @@ def mt_execute(host, local_ip, debug): # allows for multithreading
     out_data = '' # initialize our string
     out_data += 'Host: {}\n'.format(host) # print the host ip
     out_data += send_llmnr_query(host, local_ip, debug) # check llmnr
-    out_data += 'NetBIOS:'.ljust(10) + '{}\n'.format(netbios_scan(host, debug)) # check netbios
+    out_data += 'NetBIOS:'.ljust(10) + '{}'.format(netbios_scan(host, debug)) # check netbios
     out_data += send_mdns_query(host, local_ip, debug) # check mdns
     return out_data
 
