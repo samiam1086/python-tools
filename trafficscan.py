@@ -140,6 +140,7 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
 
     else:
         sock.close()
+        netbios_log(host)
         if debug:
             # Parse response
             if len(data) < 57:  # Basic validation
