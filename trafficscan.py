@@ -18,6 +18,15 @@ color_YELL = '\033[93m'
 color_reset = '\033[0m'
 
 
+logo ="""
+ _____            __  __ _      __                 
+/__   \_ __ __ _ / _|/ _(_) ___/ _\ ___ __ _ _ __  
+  / /\/ '__/ _` | |_| |_| |/ __\ \ / __/ _` | '_ \ 
+ / /  | | | (_| |  _|  _| | (___\ \ (_| (_| | | | |
+ \/   |_|  \__,_|_| |_| |_|\___\__/\___\__,_|_| |_|
+
+"""
+
 def llmnr_log(ip, hostname):
     with open('llmnr.hosts', 'a') as f:
         f.write('{} {}\n'.format(ip, hostname))
@@ -307,6 +316,7 @@ def check_write_perms():  # checks if we can write to the location that our logs
 
 
 if __name__ == "__main__":
+    print(logo)
     parser = argparse.ArgumentParser(description="Check if hosts are running LLMNR.")  # argparse
     parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation. You can also just put an ip or cird range here ex 10.10.10.10")
     parser.add_argument('-ip', action='store', help='Your local ip or interface')
