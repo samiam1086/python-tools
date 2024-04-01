@@ -36,9 +36,12 @@ def netbios_log(ip, hostname):
         f.close()
 
 def read_hosts(file_name):
-    with open(file_name, 'r') as file:
-        hosts = file.read().strip().split('\n')
-    return hosts
+    try:
+        with open(file_name, 'r') as file:
+            hosts = file.read().strip().split('\n')
+        return hosts
+    except FileNotFoundError:
+        return ['']
 
 def output_xlsx(outfile):
     # the code below adds an xlsx file because someone wanted it added
@@ -85,7 +88,10 @@ def is_port_in_use(port, local_ip):  # function to check if a port is in use
 
 def send_mdns_query(host, local_ip, debug):
     try:
-        question = '_services._dns-sd._udp.local'  # this is now you make an mdns query i think
+        question = 'in-addr.arpa'
+        split_address = host.split('.')
+        split_address.reverse()
+        question = '.'.join(split_address) + '.' + question  # this changes the ip to a reversed form so 10.1.20.3 goes to 3.20.1.10.in-addr.arpa
 
         src_port = random.randrange(15000, 50000)  # get a random port
         ipiu = is_port_in_use(src_port, local_ip)
@@ -100,11 +106,12 @@ def send_mdns_query(host, local_ip, debug):
         response = dns.query.udp(query, host, port=5353, timeout=5, source=local_ip, source_port=src_port)  # send the query
 
         if response.answer:  # if the query came back then there is mdns in the environment
-            try: # since i cant get get the hostname through mdns because idk the code is 1-1 of nessus's but mine no work :( so we use socket gethostbyaddr which is hit or miss
-                addr_info = socket.gethostbyaddr(host)
-                hostname = addr_info[0] if addr_info else ''
-                mdns_log(host, hostname)  # log the host
-            except Exception:
+            try:
+                if response.answer[0].to_text().split(' ')[4].endswith('.'):
+                    mdns_log(host, ''.join(response.answer[0].to_text().split(' ')[4].rsplit('.local.', 1)))  # log the host ip
+                else:
+                    mdns_log(host, response.answer[0].to_text().split(' ')[4])
+            except IndexError:
                 mdns_log(host, '')
 
             if debug:  # if we are debugging give the actual mdns response
@@ -143,7 +150,7 @@ def send_llmnr_query(host, local_ip, debug):
         if response.answer:  # if we got a response llmnr is present on the host
             try:
                 if response.answer[0].to_text().split(' ')[4].endswith('.'):
-                    llmnr_log(host, response.answer[0].to_text().split(' ')[4].replace('.', ''))  # log the host ip
+                    llmnr_log(host, ''.join(response.answer[0].to_text().split(' ')[4].rsplit('.', 1)))  # log the host ip
                 else:
                     llmnr_log(host, response.answer[0].to_text().split(' ')[4])
             except IndexError:
