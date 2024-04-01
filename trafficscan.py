@@ -124,38 +124,38 @@ def send_llmnr_query(host, local_ip, debug):
 def netbios_scan(host, debug): # scan for netbios using nbtscan
     # NetBIOS-NS packet structure: Transaction ID, Flags, Questions, Answer RRs, Authority RRs, Additional RRs, Name, Type, Class, TTL, Length, Number of names
     message = b'\x00\x00' + b'\x00\x10' + b'\x00\x01' + b'\x00\x00' + b'\x00\x00' + b'\x00\x00' + b'\x20' + b'CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' + b'\x00' + b'\x00\x21' + b'\x00\x01'
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # make a socket connection with out message
     sock.settimeout(5)
 
     try:
         sock.sendto(message, (host, 137))
         data = sock.recvfrom(1024)
         data = data[0] # we are returned a list and the first item is the actual response
-    except socket.timeout:
+    except socket.timeout: # if we hit the timeout then the host is likely not running netbios
         sock.close()
-        if debug:
+        if debug: # verbose output
             return f"Timeout during communication with {host}\n"
         else:
             return '{}NO{}\n'.format(color_GRE, color_reset)
 
-    except Exception as e:
+    except Exception as e: # if we get a generic error
         sock.close()
-        if debug:
+        if debug: # verbose output
             return f"Error during communication: {e}\n"
         else:
             return '{}NO{}\n'.format(color_GRE, color_reset)
 
     else:
-        sock.close()
+        sock.close() # close the socket connection
 
         # Parse response
         if len(data) < 57:  # Basic validation
             output = "Invalid response length\n"
 
         # The NetBIOS Name
-        try:  # attempts to get the netbios name if we fail to decode just let em know
+        try:  # try to decode with ascii if that fails try utf-8 otherwise return an error
             netbiosname = data[57:57 + 15].decode('ascii').strip()
-        except UnicodeDecodeError:
+        except UnicodeDecodeError: # try a different decoding if ascii fails
             try:
                 netbiosname = data[57:57 + 15].decode('utf-8').strip()
             except UnicodeDecodeError:
@@ -170,8 +170,8 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
             macaddress = binascii.hexlify(data[74:80]).decode('ascii')
             macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
         except UnicodeDecodeError:
-            try:
-                macaddress = binascii.hexlify(data[74:80]).decode('ascii')
+            try: # try to decode with ascii if that fails try utf-8 otherwise return an error
+                macaddress = binascii.hexlify(data[74:80]).decode('utf-8')
                 macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
             except UnicodeDecodeError:
                 macaddress_formatted = 'Failed to decode'
