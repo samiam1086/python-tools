@@ -241,21 +241,36 @@ def mt_execute(host, local_ip, debug):  # allows for multithreading
 
 def parse_hosts_file(hosts_file):  # parse our host file
     hosts = []
-    try:
-        with open(hosts_file, 'r') as file:
-            for line in file:
-                line = line.strip()
-                if line:
-                    if '/' in line:
-                        # Assuming CIDR notation
-                        network = ipaddress.ip_network(line, strict=False)
-                        hosts.extend(str(ip) for ip in network.hosts())
-                    else:
-                        hosts.append(line)
+    if os.path.isfile(hosts_file):
+        try:
+            with open(hosts_file, 'r') as file:
+                for line in file:
+                    line = line.strip()
+                    if line:
+                        if '/' in line:
+                            # Assuming CIDR notation
+                            network = ipaddress.ip_network(line, strict=False)
+                            hosts.extend(str(ip) for ip in network.hosts())
+                        else:
+                            hosts.append(line)
+            return hosts
+        except FileNotFoundError:
+            print('The given file does not exist')
+            sys.exit(1)
+    else:
+        try:
+            if '/' in hosts_file:
+                # Assuming CIDR notation
+                network = ipaddress.ip_network(hosts_file, strict=False)
+                hosts.extend(str(ip) for ip in network.hosts())
+            else:
+                hosts.append(hosts_file)
+        except Exception as e:
+            print(e)
+            print('Error: there is something wrong with the ip you gave')
+            sys.exit(1)
+
         return hosts
-    except FileNotFoundError:
-        print('The given file does not exist')
-        sys.exit(1)
 
 
 def scan_hosts(hosts, output_file, local_ip, threads, debug):  # scan our hosts with multithreading
@@ -286,11 +301,16 @@ def check_write_perms():  # checks if we can write to the location that our logs
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check if hosts are running LLMNR.")  # argparse
-    parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation.")
+    parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation. You can also just put an ip or cird range here ex 10.10.10.10")
     parser.add_argument('-ip', action='store', help='Your local ip or interface')
     parser.add_argument("-o", "--output_file", default="scan_log.txt", help="Output file name for the log and xlsx file. (Default=scan_log.txt)")
     parser.add_argument('-t', '--threads', action='store', default=5, type=int, help='Number of threads to use (Default=5)')
     parser.add_argument('-debug', action='store_true', help='Enable debugging')
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+
     args = parser.parse_args()
 
     hosts = parse_hosts_file(args.hosts_file)  # get out hosts from the specified hosts_file
