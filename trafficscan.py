@@ -97,7 +97,7 @@ def send_mdns_query(host, local_ip, debug):
             print('Sending MDNS Query for: {}:5353 from {}:{}'.format(host, local_ip, src_port))
 
         query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN)  # make our dns query
-        response = dns.query.udp(query, '224.0.0.251', port=5353, timeout=5, source=local_ip, source_port=src_port)  # send the query
+        response = dns.query.udp(query, host, port=5353, timeout=5, source=local_ip, source_port=src_port)  # send the query
 
         if response.answer:  # if the query came back then there is mdns in the environment
             try: # since i cant get get the hostname through mdns because idk the code is 1-1 of nessus's but mine no work :( so we use socket gethostbyaddr which is hit or miss
