@@ -16,19 +16,20 @@ color_GRE = '\033[92m'
 color_YELL = '\033[93m'
 color_reset = '\033[0m'
 
-def llmnr_log(ip):
+def llmnr_log(ip, hostname):
     with open('llmnr.hosts', 'a') as f:
-        f.write('{}\n'.format(ip))
-
+        f.write('{} {}\n'.format(ip, hostname))
+        f.close()
 
 def mdns_log(ip):
     with open('mdns.hosts', 'a') as f:
         f.write('{}\n'.format(ip))
+        f.close()
 
-
-def netbios_log(ip):
+def netbios_log(ip, hostname):
     with open('netbios.hosts', 'a') as f:
-        f.write('{}\n'.format(ip))
+        f.write('{} {}\n'.format(ip, hostname))
+        f.close()
 
 
 def is_port_in_use(port, local_ip): # function to check if a port is in use
@@ -100,7 +101,13 @@ def send_llmnr_query(host, local_ip, debug):
         response = dns.query.udp(query, '224.0.0.252', port=5355, timeout=5, source=local_ip, source_port=src_port) # send the dns query to the victim
 
         if response.answer: # if we got a response llmnr is present on the host
-            llmnr_log(host) # log the host ip
+            try:
+                if response.answer[0].to_text().split(' ')[4].endswith('.'):
+                    llmnr_log(host, response.answer[0].to_text().split(' ')[4].replace('.', '')) # log the host ip
+                else:
+                    llmnr_log(host, response.answer[0].to_text().split(' ')[4])
+            except IndexError:
+                llmnr_log(host, '')
             if debug: # if we are debugging give the actual llmnr response
                 return 'LLMNR Response: {}\n'.format(response.answer[0].to_text())
             else: # if were not debugging just return yes
@@ -123,7 +130,7 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
     try:
         sock.sendto(message, (host, 137))
         data = sock.recvfrom(1024)
-        data = data[0]
+        data = data[0] # we are returned a list and the first item is the actual response
     except socket.timeout:
         sock.close()
         if debug:
@@ -140,36 +147,46 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
 
     else:
         sock.close()
-        netbios_log(host)
-        if debug:
-            # Parse response
-            if len(data) < 57:  # Basic validation
-                return "Invalid response length\n"
 
-            # The NetBIOS Name
-            try: # attempts to get the netbios name if we fail to decode just let em know
-                netbiosname = data[57:57 + 15].decode('ascii').strip()
+        # Parse response
+        if len(data) < 57:  # Basic validation
+            output = "Invalid response length\n"
+
+        # The NetBIOS Name
+        try:  # attempts to get the netbios name if we fail to decode just let em know
+            netbiosname = data[57:57 + 15].decode('ascii').strip()
+        except UnicodeDecodeError:
+            try:
+                netbiosname = data[57:57 + 15].decode('utf-8').strip()
             except UnicodeDecodeError:
-                try:
-                    netbiosname = data[57:57 + 15].decode('utf-8').strip()
-                except UnicodeDecodeError:
-                    netbiosname = 'Failed to decode'
+                netbiosname = 'Failed to decode'
+            except Exception:
+                netbiosname = 'Unable to parse'
+        except Exception:
+            netbiosname = 'Unable to parse'
 
-            # MAC address starts at byte 57+15+2=74, 6 bytes long
+        # MAC address starts at byte 57+15+2=74, 6 bytes long
+        try:
+            macaddress = binascii.hexlify(data[74:80]).decode('ascii')
+            macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
+        except UnicodeDecodeError:
             try:
                 macaddress = binascii.hexlify(data[74:80]).decode('ascii')
                 macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
             except UnicodeDecodeError:
-                try:
-                    macaddress = binascii.hexlify(data[74:80]).decode('ascii')
-                    macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
-                except UnicodeDecodeError:
-                    macaddress_formatted = 'Failed to decode'
+                macaddress_formatted = 'Failed to decode'
+            except Exception:
+                netbiosname = 'Unable to parse'
+        except Exception:
+            netbiosname = 'Unable to parse'
 
-
-            return f"NetBIOS Name: '{netbiosname}'" + f" MAC Address: '{macaddress_formatted}'\n"
+        if debug:
+            output = f"NetBIOS Name: '{netbiosname}'" + f" MAC Address: '{macaddress_formatted}'\n"
         else:
-            return '{}YES{}\n'.format(color_RED, color_reset)
+            output = '{}YES{}\n'.format(color_RED, color_reset)
+
+        netbios_log(host, netbiosname)
+        return output
 
 
 def mt_execute(host, local_ip, debug): # allows for multithreading
@@ -207,7 +224,8 @@ def scan_hosts(hosts, output_file, local_ip, threads, debug): # scan our hosts w
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
             futures = []
             for host in hosts:
-                futures.append(executor.submit(mt_execute, host, local_ip, debug))
+                if host != local_ip: # ensure we dont scan ourself
+                    futures.append(executor.submit(mt_execute, host, local_ip, debug))
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
                 print(result)
@@ -300,5 +318,5 @@ if __name__ == "__main__":
             print('{}[!!]{} Error could not get that interface\'s address. Does it have an IP?'.format(color_RED, color_reset))
             sys.exit(0)
 
-
     scan_hosts(hosts, args.output_file, local_ip, args.threads, args.debug)
+    
