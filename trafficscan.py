@@ -211,9 +211,13 @@ def netbios_scan(host, debug):  # scan for netbios using nbtscan
         # The NetBIOS Name
         try:  # try to decode with ascii if that fails try utf-8 otherwise return an error
             netbiosname = data[57:57 + 15].decode('ascii').strip()
+            if len(netbiosname) < 5:
+                netbiosname = data.split(b'\x00\xc4\x00')[1].split(b'\x00')[0].decode('ascii').strip()
         except UnicodeDecodeError:  # try a different decoding if ascii fails
             try:
                 netbiosname = data[57:57 + 15].decode('utf-8').strip()
+                if len(netbiosname) < 5:
+                    netbiosname = data.split(b'\x00\xc4\x00')[1].split(b'\x00')[0].decode('utf-8').strip()
             except UnicodeDecodeError:
                 netbiosname = 'Failed to decode'
             except Exception:
