@@ -1,6 +1,7 @@
 import concurrent.futures
 import netifaces as ni
 import socket, errno
+import pandas as pd
 import dns.message
 import ipaddress
 import dns.query
@@ -16,23 +17,56 @@ color_GRE = '\033[92m'
 color_YELL = '\033[93m'
 color_reset = '\033[0m'
 
+
 def llmnr_log(ip, hostname):
     with open('llmnr.hosts', 'a') as f:
         f.write('{} {}\n'.format(ip, hostname))
         f.close()
 
-def mdns_log(ip):
+
+def mdns_log(ip, hostname):
     with open('mdns.hosts', 'a') as f:
-        f.write('{}\n'.format(ip))
+        f.write('{} {}\n'.format(ip, hostname))
         f.close()
+
 
 def netbios_log(ip, hostname):
     with open('netbios.hosts', 'a') as f:
         f.write('{} {}\n'.format(ip, hostname))
         f.close()
 
+def read_hosts(file_name):
+    with open(file_name, 'r') as file:
+        hosts = file.read().strip().split('\n')
+    return hosts
 
-def is_port_in_use(port, local_ip): # function to check if a port is in use
+def output_xlsx(outfile):
+    # the code below adds an xlsx file because someone wanted it added
+    # Read the host files for each protocol
+    llmnr_hosts = read_hosts('llmnr.hosts')
+    mdns_hosts = read_hosts('mdns.hosts')
+    netbios_hosts = read_hosts('netbios.hosts')
+
+    # Find the longest list to ensure the DataFrame is fully populated without missing values
+    max_length = max(len(llmnr_hosts), len(mdns_hosts), len(netbios_hosts))
+
+    # Extend shorter lists with empty strings to match the longest list
+    llmnr_hosts.extend([''] * (max_length - len(llmnr_hosts)))
+    mdns_hosts.extend([''] * (max_length - len(mdns_hosts)))
+    netbios_hosts.extend([''] * (max_length - len(netbios_hosts)))
+
+    # Create a DataFrame
+    df = pd.DataFrame({
+        'LLMNR': llmnr_hosts,
+        'NetBIOS': netbios_hosts,
+        'mDNS': mdns_hosts
+    })
+
+    # Save to an Excel file
+    df.to_excel('{}.xlsx'.format(outfile), index=False)
+
+
+def is_port_in_use(port, local_ip):  # function to check if a port is in use
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
@@ -51,32 +85,38 @@ def is_port_in_use(port, local_ip): # function to check if a port is in use
 
 def send_mdns_query(host, local_ip, debug):
     try:
-        question = '_services._dns-sd._udp.local' # this is now you make an mdns query i think
+        question = '_services._dns-sd._udp.local'  # this is now you make an mdns query i think
 
-        src_port = random.randrange(15000, 50000) # get a random port
+        src_port = random.randrange(15000, 50000)  # get a random port
         ipiu = is_port_in_use(src_port, local_ip)
-        while ipiu: # ensure the port is not in use
+        while ipiu:  # ensure the port is not in use
             src_port = random.randrange(15000, 50000)
             ipiu = is_port_in_use(src_port)
 
-        if debug: # debug prints
+        if debug:  # debug prints
             print('Sending MDNS Query for: {}:5353 from {}:{}'.format(host, local_ip, src_port))
 
-        query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN) # make our dns query
-        response = dns.query.udp(query, '224.0.0.251', port=5353, timeout=5, source=local_ip, source_port=src_port) # send the query
+        query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN)  # make our dns query
+        response = dns.query.udp(query, '224.0.0.251', port=5353, timeout=5, source=local_ip, source_port=src_port)  # send the query
 
-        if response.answer: # if the query came back then there is mdns in the environment
-            mdns_log(host) # log the host
-            if debug: # if we are debugging give the actual mdns response
+        if response.answer:  # if the query came back then there is mdns in the environment
+            try: # since i cant get get the hostname through mdns because idk the code is 1-1 of nessus's but mine no work :( so we use socket gethostbyaddr which is hit or miss
+                addr_info = socket.gethostbyaddr(host)
+                hostname = addr_info[0] if addr_info else ''
+                mdns_log(host, hostname)  # log the host
+            except Exception:
+                mdns_log(host, '')
+
+            if debug:  # if we are debugging give the actual mdns response
                 return 'MDNS Response: {}\n'.format(response.answer[0].to_text())
-            else: # otherwise just return yes
+            else:  # otherwise just return yes
                 return 'MDNS:'.ljust(10) + '{}YES{}\n'.format(color_RED, color_reset)
-        else: # if we did not get a response then mdns is closed
+        else:  # if we did not get a response then mdns is closed
             return 'MDNS:'.ljust(10) + '{}NO{}\n'.format(color_GRE, color_reset)
-    except Exception as e: # an exception occurred
-        if debug: # if were debugging give verbose error
+    except Exception as e:  # an exception occurred
+        if debug:  # if were debugging give verbose error
             return 'MDNS Response: {}\n'.format(str(e))
-        else: # otherwise it is likely that mdns is closed
+        else:  # otherwise it is likely that mdns is closed
             return 'MDNS:'.ljust(10) + '{}NO{}\n'.format(color_GRE, color_reset)
 
 
@@ -86,67 +126,67 @@ def send_llmnr_query(host, local_ip, debug):
         question = 'in-addr.arpa'
         split_address = host.split('.')
         split_address.reverse()
-        question = '.'.join(split_address) + '.' + question # this changes the ip to a reversed form so 10.1.20.3 goes to 3.20.1.10.in-addr.arpa
+        question = '.'.join(split_address) + '.' + question  # this changes the ip to a reversed form so 10.1.20.3 goes to 3.20.1.10.in-addr.arpa
 
-        src_port = random.randrange(15000,50000) # get a random port for src
+        src_port = random.randrange(15000, 50000)  # get a random port for src
         ipiu = is_port_in_use(src_port, local_ip)
-        while ipiu: # ensure the port is not in use
+        while ipiu:  # ensure the port is not in use
             src_port = random.randrange(15000, 50000)
             ipiu = is_port_in_use(src_port)
 
-        if debug: # verbose debugging
+        if debug:  # verbose debugging
             print('Sending LLMNR Query for: {}:5355 from {}:{}'.format(host, local_ip, src_port))
 
-        query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN) # make our dns query
-        response = dns.query.udp(query, '224.0.0.252', port=5355, timeout=5, source=local_ip, source_port=src_port) # send the dns query to the victim
+        query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN)  # make our dns query
+        response = dns.query.udp(query, '224.0.0.252', port=5355, timeout=5, source=local_ip, source_port=src_port)  # send the dns query to the victim
 
-        if response.answer: # if we got a response llmnr is present on the host
+        if response.answer:  # if we got a response llmnr is present on the host
             try:
                 if response.answer[0].to_text().split(' ')[4].endswith('.'):
-                    llmnr_log(host, response.answer[0].to_text().split(' ')[4].replace('.', '')) # log the host ip
+                    llmnr_log(host, response.answer[0].to_text().split(' ')[4].replace('.', ''))  # log the host ip
                 else:
                     llmnr_log(host, response.answer[0].to_text().split(' ')[4])
             except IndexError:
                 llmnr_log(host, '')
-            if debug: # if we are debugging give the actual llmnr response
+            if debug:  # if we are debugging give the actual llmnr response
                 return 'LLMNR Response: {}\n'.format(response.answer[0].to_text())
-            else: # if were not debugging just return yes
+            else:  # if were not debugging just return yes
                 return 'LLMNR:'.ljust(10) + '{}YES{}\n'.format(color_RED, color_reset)
-        else: # if no response was given then llmnr is closed
+        else:  # if no response was given then llmnr is closed
             return 'LLMNR:'.ljust(10) + '{}NO{}\n'.format(color_GRE, color_reset)
-    except Exception as e: # we got an error
-        if debug: # if were debugging give the actual error
+    except Exception as e:  # we got an error
+        if debug:  # if were debugging give the actual error
             return 'LLMNR Response: {}\n'.format(str(e))
-        else: # otherwise just return no as llmnr is likely closed
+        else:  # otherwise just return no as llmnr is likely closed
             return 'LLMNR:'.ljust(10) + '{}NO{}\n'.format(color_GRE, color_reset)
 
 
-def netbios_scan(host, debug): # scan for netbios using nbtscan
+def netbios_scan(host, debug):  # scan for netbios using nbtscan
     # NetBIOS-NS packet structure: Transaction ID, Flags, Questions, Answer RRs, Authority RRs, Additional RRs, Name, Type, Class, TTL, Length, Number of names
     message = b'\x00\x00' + b'\x00\x10' + b'\x00\x01' + b'\x00\x00' + b'\x00\x00' + b'\x00\x00' + b'\x20' + b'CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' + b'\x00' + b'\x00\x21' + b'\x00\x01'
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # make a socket connection with out message
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # make a socket connection with out message
     sock.settimeout(5)
 
     try:
         sock.sendto(message, (host, 137))
         data = sock.recvfrom(1024)
-        data = data[0] # we are returned a list and the first item is the actual response
-    except socket.timeout: # if we hit the timeout then the host is likely not running netbios
+        data = data[0]  # we are returned a list and the first item is the actual response
+    except socket.timeout:  # if we hit the timeout then the host is likely not running netbios
         sock.close()
-        if debug: # verbose output
+        if debug:  # verbose output
             return f"Timeout during communication with {host}\n"
         else:
             return '{}NO{}\n'.format(color_GRE, color_reset)
 
-    except Exception as e: # if we get a generic error
+    except Exception as e:  # if we get a generic error
         sock.close()
-        if debug: # verbose output
+        if debug:  # verbose output
             return f"Error during communication: {e}\n"
         else:
             return '{}NO{}\n'.format(color_GRE, color_reset)
 
     else:
-        sock.close() # close the socket connection
+        sock.close()  # close the socket connection
 
         # Parse response
         if len(data) < 57:  # Basic validation
@@ -155,7 +195,7 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
         # The NetBIOS Name
         try:  # try to decode with ascii if that fails try utf-8 otherwise return an error
             netbiosname = data[57:57 + 15].decode('ascii').strip()
-        except UnicodeDecodeError: # try a different decoding if ascii fails
+        except UnicodeDecodeError:  # try a different decoding if ascii fails
             try:
                 netbiosname = data[57:57 + 15].decode('utf-8').strip()
             except UnicodeDecodeError:
@@ -170,7 +210,7 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
             macaddress = binascii.hexlify(data[74:80]).decode('ascii')
             macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
         except UnicodeDecodeError:
-            try: # try to decode with ascii if that fails try utf-8 otherwise return an error
+            try:  # try to decode with ascii if that fails try utf-8 otherwise return an error
                 macaddress = binascii.hexlify(data[74:80]).decode('utf-8')
                 macaddress_formatted = ':'.join(macaddress[i:i + 2] for i in range(0, len(macaddress), 2))
             except UnicodeDecodeError:
@@ -189,17 +229,17 @@ def netbios_scan(host, debug): # scan for netbios using nbtscan
         return output
 
 
-def mt_execute(host, local_ip, debug): # allows for multithreading
+def mt_execute(host, local_ip, debug):  # allows for multithreading
 
-    out_data = '' # initialize our string
-    out_data += 'Host: {}\n'.format(host) # print the host ip
-    out_data += send_llmnr_query(host, local_ip, debug) # check llmnr
-    out_data += 'NetBIOS:'.ljust(10) + '{}'.format(netbios_scan(host, debug)) # check netbios
-    out_data += send_mdns_query(host, local_ip, debug) # check mdns
+    out_data = ''  # initialize our string
+    out_data += 'Host: {}\n'.format(host)  # print the host ip
+    out_data += send_llmnr_query(host, local_ip, debug)  # check llmnr
+    out_data += 'NetBIOS:'.ljust(10) + '{}'.format(netbios_scan(host, debug))  # check netbios
+    out_data += send_mdns_query(host, local_ip, debug)  # check mdns
     return out_data
 
 
-def parse_hosts_file(hosts_file): # parse our host file
+def parse_hosts_file(hosts_file):  # parse our host file
     hosts = []
     try:
         with open(hosts_file, 'r') as file:
@@ -218,13 +258,13 @@ def parse_hosts_file(hosts_file): # parse our host file
         sys.exit(1)
 
 
-def scan_hosts(hosts, output_file, local_ip, threads, debug): # scan our hosts with multithreading
+def scan_hosts(hosts, output_file, local_ip, threads, debug):  # scan our hosts with multithreading
 
     with open(output_file, "w") as log_file:
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
             futures = []
             for host in hosts:
-                if host != local_ip: # ensure we dont scan ourself
+                if host != local_ip:  # ensure we dont scan ourself
                     futures.append(executor.submit(mt_execute, host, local_ip, debug))
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
@@ -232,7 +272,7 @@ def scan_hosts(hosts, output_file, local_ip, threads, debug): # scan our hosts w
                 log_file.write(result + '\n')
 
 
-def check_write_perms(): # checks if we can write to the location that our logs end up to ensure there are no errors
+def check_write_perms():  # checks if we can write to the location that our logs end up to ensure there are no errors
     try:
         with open('test_xzngfejwoeigj11jw', 'w') as f:
             f.write('1')
@@ -245,15 +285,15 @@ def check_write_perms(): # checks if we can write to the location that our logs 
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Check if hosts are running LLMNR.") # argparse
+    parser = argparse.ArgumentParser(description="Check if hosts are running LLMNR.")  # argparse
     parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation.")
     parser.add_argument('-ip', action='store', help='Your local ip or interface')
-    parser.add_argument("-o", "--output_file", default="scan_log.txt", help="Output file name.")
+    parser.add_argument("-o", "--output_file", default="scan_log.txt", help="Output file name for the log and xlsx file. (Default=scan_log.txt)")
     parser.add_argument('-t', '--threads', action='store', default=5, type=int, help='Number of threads to use (Default=5)')
     parser.add_argument('-debug', action='store_true', help='Enable debugging')
     args = parser.parse_args()
 
-    hosts = parse_hosts_file(args.hosts_file) # get out hosts from the specified hosts_file
+    hosts = parse_hosts_file(args.hosts_file)  # get out hosts from the specified hosts_file
 
     check_write_perms()
 
@@ -262,15 +302,15 @@ if __name__ == "__main__":
         ifaces = ni.interfaces()
         iface_ips = []
 
-        for face in ifaces: # get all interface ips
+        for face in ifaces:  # get all interface ips
             try:
                 iface_ips.append(ni.ifaddresses(face)[ni.AF_INET][0]['addr'])
             except BaseException as exc:
                 continue
 
         try:  # check to see if the interface has an ip
-            if local_ip in ifaces: # if the given ip is one of our interfaces
-                local_ip = str(ni.ifaddresses(local_ip)[ni.AF_INET][0]['addr']) # get the ip address of the interface
+            if local_ip in ifaces:  # if the given ip is one of our interfaces
+                local_ip = str(ni.ifaddresses(local_ip)[ni.AF_INET][0]['addr'])  # get the ip address of the interface
                 print("local IP => {}\n".format(local_ip))
             elif local_ip in iface_ips:
                 print("local IP => {}\n".format(local_ip))
@@ -288,7 +328,7 @@ if __name__ == "__main__":
         ifaces = ni.interfaces()
         iface_ips = []
 
-        for face in ifaces: # get all interface ips
+        for face in ifaces:  # get all interface ips
             try:
                 iface_ips.append(ni.ifaddresses(face)[ni.AF_INET][0]['addr'])
             except BaseException as exc:
@@ -318,5 +358,5 @@ if __name__ == "__main__":
             print('{}[!!]{} Error could not get that interface\'s address. Does it have an IP?'.format(color_RED, color_reset))
             sys.exit(0)
 
-    scan_hosts(hosts, args.output_file, local_ip, args.threads, args.debug)
-    
+    scan_hosts(hosts, args.output_file, local_ip, args.threads, args.debug) # scan em
+    output_xlsx(args.output_file) # give an excel sheet
