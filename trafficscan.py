@@ -213,6 +213,8 @@ def netbios_scan(host, debug):  # scan for netbios using nbtscan
             netbiosname = data[57:57 + 15].decode('ascii').strip()
             if '__MSBROWSE__' in netbiosname:
                 netbiosname = data.split(b'\x00\xc6\x00')[1].split(b'\x00')[0].decode('ascii').strip()
+            if 'WORKGROUP' in netbiosname:
+                netbiosname = data.split(b'\x00\x04\x00')[1].split(b'\x00')[0].decode('ascii').strip().replace(' ', '')
             if len(netbiosname) < 5:
                 netbiosname = data.split(b'\x00\xc4\x00')[1].split(b'\x00')[0].decode('ascii').strip()
         except UnicodeDecodeError:  # try a different decoding if ascii fails
@@ -220,14 +222,16 @@ def netbios_scan(host, debug):  # scan for netbios using nbtscan
                 netbiosname = data[57:57 + 15].decode('utf-8').strip()
                 if '__MSBROWSE__' in netbiosname:
                     netbiosname = data.split(b'\x00\xc6\x00')[1].split(b'\x00')[0].decode('utf-8').strip()
+                if 'WORKGROUP' in netbiosname:
+                    netbiosname = data.split(b'\x00\x04\x00')[1].split(b'\x00')[0].decode('ascii').strip().replace(' ', '')
                 if len(netbiosname) < 5:
                     netbiosname = data.split(b'\x00\xc4\x00')[1].split(b'\x00')[0].decode('utf-8').strip()
             except UnicodeDecodeError:
                 netbiosname = 'Failed to decode'
-            except Exception:
-                netbiosname = 'Unable to parse'
-        except Exception:
-            netbiosname = 'Unable to parse'
+            except Exception as e:
+                netbiosname = 'Unable to parse due to: {}'.format(str(e))
+        except Exception as e:
+            netbiosname = 'Unable to parse due to: {}'.format(str(e))
 
         # MAC address starts at byte 57+15+2=74, 6 bytes long
         try:
