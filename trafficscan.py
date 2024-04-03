@@ -266,16 +266,10 @@ def netbios_scan(host, debug):  # scan for netbios using nbtscan
                 netbiosname = max(posdata, key=len)
 
             except UnicodeDecodeError:
-                if debug:
-                    print(host.encode() + b': ' + data)
                 netbiosname = 'Failed to decode'
             except Exception as e:
-                if debug:
-                    print(host.encode() + b': ' + data)
                 netbiosname = 'Unable to parse due to: {}'.format(str(e))
         except Exception as e:
-            if debug:
-                print(host.encode() + b': ' + data)
             netbiosname = 'Unable to parse due to: {}'.format(str(e))
 
         # MAC address starts at byte 57+15+2=74, 6 bytes long
