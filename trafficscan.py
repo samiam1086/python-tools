@@ -208,29 +208,74 @@ def netbios_scan(host, debug):  # scan for netbios using nbtscan
         if len(data) < 57:  # Basic validation
             output = "Invalid response length\n"
 
+        if debug:
+            print(data)
+
+        posdata = []
         # The NetBIOS Name
         try:  # try to decode with ascii if that fails try utf-8 otherwise return an error
-            netbiosname = data[57:57 + 15].decode('ascii').strip()
-            if '__MSBROWSE__' in netbiosname:
-                netbiosname = data.split(b'\x00\xc6\x00')[1].split(b'\x00')[0].decode('ascii').strip()
-            if 'WORKGROUP' in netbiosname:
-                netbiosname = data.split(b'\x00\x04\x00')[1].split(b'\x00')[0].decode('ascii').strip().replace(' ', '')
-            if len(netbiosname) < 5:
-                netbiosname = data.split(b'\x00\xc4\x00')[1].split(b'\x00')[0].decode('ascii').strip()
-        except UnicodeDecodeError:  # try a different decoding if ascii fails
             try:
-                netbiosname = data[57:57 + 15].decode('utf-8').strip()
-                if '__MSBROWSE__' in netbiosname:
-                    netbiosname = data.split(b'\x00\xc6\x00')[1].split(b'\x00')[0].decode('utf-8').strip()
-                if 'WORKGROUP' in netbiosname:
-                    netbiosname = data.split(b'\x00\x04\x00')[1].split(b'\x00')[0].decode('ascii').strip().replace(' ', '')
-                if len(netbiosname) < 5:
-                    netbiosname = data.split(b'\x00\xc4\x00')[1].split(b'\x00')[0].decode('utf-8').strip()
+                pos1 = data[57:57 + 15].decode('ascii').strip()
+                if '__MSBROWSE__' not in pos1 and 'WORKGROUP' not in pos1:
+                    posdata.append(pos1)
+            except Exception:
+                pos1 = None
+
+            try:
+                pos2 = data[75:75 + 15].decode('ascii').strip()
+                if '__MSBROWSE__' not in pos2 and 'WORKGROUP' not in pos2:
+                    posdata.append(pos2)
+            except Exception:
+                pos2 = None
+
+            try:
+                pos3 = data[93:93 + 15].decode('ascii').strip()
+                if '__MSBROWSE__' not in pos3 and 'WORKGROUP' not in pos3:
+                    posdata.append(pos3)
+            except Exception:
+                pos3 = None
+
+            netbiosname = max(posdata, key=len)
+
+        except UnicodeDecodeError:  # try a different decoding if ascii fails
+
+            posdata = []
+            # The NetBIOS Name
+            try:  # try to decode with ascii if that fails try utf-8 otherwise return an error
+                try: # dumb way to be smart since each pos starts at 57 and is 15 bytes in length with 3 for padding we add 18 and do the next, check for msbrowse and workgroup then find the longest
+                    pos1 = data[57:57 + 15].decode('utf-8').strip()
+                    if '__MSBROWSE__' not in pos1 and 'WORKGROUP' not in pos1:
+                        posdata.append(pos1)
+                except Exception:
+                    pos1 = None
+
+                try:
+                    pos2 = data[75:75 + 15].decode('utf-8').strip()
+                    if '__MSBROWSE__' not in pos2 and 'WORKGROUP' not in pos2:
+                        posdata.append(pos2)
+                except Exception:
+                    pos2 = None
+
+                try:
+                    pos3 = data[93:93 + 15].decode('utf-8').strip()
+                    if '__MSBROWSE__' not in pos3 and 'WORKGROUP' not in pos3:
+                        posdata.append(pos3)
+                except Exception:
+                    pos3 = None
+
+                netbiosname = max(posdata, key=len)
+
             except UnicodeDecodeError:
+                if debug:
+                    print(host.encode() + b': ' + data)
                 netbiosname = 'Failed to decode'
             except Exception as e:
+                if debug:
+                    print(host.encode() + b': ' + data)
                 netbiosname = 'Unable to parse due to: {}'.format(str(e))
         except Exception as e:
+            if debug:
+                print(host.encode() + b': ' + data)
             netbiosname = 'Unable to parse due to: {}'.format(str(e))
 
         # MAC address starts at byte 57+15+2=74, 6 bytes long
