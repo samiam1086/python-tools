@@ -1,6 +1,5 @@
 # Designed and tested with python 3.11.8 on Kali Linux 6.6.9 also works on python 3.11.6, and 3.12.0 on Kali Linux 6.3.0 and Windows 10 Pro 10.0.19045
 # only notable issues: python 3.12.0 and newer give a syntaxwarning at the start of each run due to how I do colors and I cannot stop that for some reason
-# i also have to run cls on the console through os.system() to make the colors work on windows because windows (this is not done on linux)
 # windows interface selection gives guids instead of names for some reason??? Still gives the correct ip tho
 
 import concurrent.futures
@@ -396,7 +395,7 @@ def check_write_perms():  # checks if we can write to the location that our logs
 
 if __name__ == "__main__":
     if os.name == 'nt':
-        os.system('cls')
+        os.system('')
     print(logo)
     parser = argparse.ArgumentParser(description="Check if hosts are running LLMNR.")  # argparse
     parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation. You can also just put an ip or cird range here ex 10.10.10.10")
