@@ -1,15 +1,43 @@
+# Designed and tested with python 3.11.8 on Kali Linux 6.6.9 also works on python 3.11.6, and 3.12.0 on Kali Linux 6.3.0 and Windows 10 Pro 10.0.19045
+# only notable issues: python 3.12.0 and newer give a syntaxwarning at the start of each run due to how I do colors and I cannot stop that for some reason
+# i also have to run cls on the console through os.system() to make the colors work on windows because windows (this is not done on linux)
+# windows interface selection gives guids instead of names for some reason??? Still gives the correct ip tho
+
 import concurrent.futures
-import netifaces as ni
 import socket, errno
-import pandas as pd
-import dns.message
 import ipaddress
-import dns.query
 import binascii
 import argparse
 import random
 import sys
 import os
+
+
+try:
+    import netifaces as ni
+except ModuleNotFoundError:
+    print('Error: You need to install netifaces\nInstall with "pip3 install netifaces" or "python3 -m pip install netifaces"')
+    sys.exit(1)
+
+try:
+    import pandas as pd
+except ModuleNotFoundError:
+    print('Error: You need to install pandas\nInstall with "pip3 install pandas" or "python3 -m pip install pandas"')
+    sys.exit(1)
+
+try:
+    import dns.message
+    import dns.query
+except ModuleNotFoundError:
+    print('Error: You need to install dnspython\nInstall with "pip3 install dnspython" or "python3 -m pip install dnspython"')
+    sys.exit(1)
+
+try:
+    import openpyxl
+except ModuleNotFoundError:
+    print('Error: You need to install openpyxl\nInstall with "pip3 install openpyxl" or "python3 -m pip install openpyxl"')
+    sys.exit(1)
+
 
 # colors
 color_RED = '\033[91m'
@@ -310,7 +338,7 @@ def parse_hosts_file(hosts_file):  # parse our host file
     hosts = []
     if os.path.isfile(hosts_file): # ensure the file exists otherwise try it as if they passed an ip or cidr to the command line
         try:
-            with open(hosts_file, 'r') as file: # read the file 
+            with open(hosts_file, 'r') as file: # read the file
                 for line in file:
                     line = line.strip()
                     if line:
@@ -367,6 +395,8 @@ def check_write_perms():  # checks if we can write to the location that our logs
 
 
 if __name__ == "__main__":
+    if os.name == 'nt':
+        os.system('cls')
     print(logo)
     parser = argparse.ArgumentParser(description="Check if hosts are running LLMNR.")  # argparse
     parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation. You can also just put an ip or cird range here ex 10.10.10.10")
