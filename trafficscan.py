@@ -214,7 +214,7 @@ def netbios_scan(host, debug):  # scan for netbios using nbtscan
         posdata = []
         # The NetBIOS Name
         try:  # try to decode with ascii if that fails try utf-8 otherwise return an error
-            try:
+            try: # dumb way to be smart since each pos starts at 57 and is 15 bytes in length with 3 for padding we add 18 and do the next, check for msbrowse and workgroup then find the longest
                 pos1 = data[57:57 + 15].decode('ascii').strip()
                 if '__MSBROWSE__' not in pos1 and 'WORKGROUP' not in pos1:
                     posdata.append(pos1)
@@ -308,15 +308,15 @@ def mt_execute(host, local_ip, debug):  # allows for multithreading
 
 def parse_hosts_file(hosts_file):  # parse our host file
     hosts = []
-    if os.path.isfile(hosts_file):
+    if os.path.isfile(hosts_file): # ensure the file exists otherwise try it as if they passed an ip or cidr to the command line
         try:
-            with open(hosts_file, 'r') as file:
+            with open(hosts_file, 'r') as file: # read the file 
                 for line in file:
                     line = line.strip()
                     if line:
-                        if '/' in line:
+                        if '/' in line: # this is so we can have cidr and ips in the same file
                             # Assuming CIDR notation
-                            network = ipaddress.ip_network(line, strict=False)
+                            network = ipaddress.ip_network(line, strict=False) # black magic
                             hosts.extend(str(ip) for ip in network.hosts())
                         else:
                             hosts.append(line)
@@ -397,26 +397,26 @@ if __name__ == "__main__":
                 continue
 
         try:  # check to see if the interface has an ip
-            if local_ip in ifaces:  # if the given ip is one of our interfaces
+            if local_ip in ifaces:  # if the given ip is one of our interfaces eg. eth0 ,ensp01
                 local_ip = str(ni.ifaddresses(local_ip)[ni.AF_INET][0]['addr'])  # get the ip address of the interface
                 print("local IP => {}\n".format(local_ip))
-            elif local_ip in iface_ips:
+            elif local_ip in iface_ips: # if they gave us an ip address for -ip eg 10.10.10.10 this ensures that it is our IP were binding to
                 print("local IP => {}\n".format(local_ip))
-            else:
+            else: # if they gave us something incorrect/weird
                 print('The interface or IP you specified does not belong to the local machine')
                 sys.exit(0)
         except SystemExit:
             sys.exit(0)
-        except BaseException as exc:
+        except BaseException as exc: # if the given interface has no ip we end up here
             print('{}[!!]{} Error could not get that interface\'s address. Does it have an IP?'.format(color_RED, color_reset))
             sys.exit(0)
-    else:
+    else: # no -ip in args
         # print local interfaces and ips
         print("")
-        ifaces = ni.interfaces()
+        ifaces = ni.interfaces() # get all interfaces
         iface_ips = []
 
-        for face in ifaces:  # get all interface ips
+        for face in ifaces:  # get the ip for each interface that has one
             try:
                 iface_ips.append(ni.ifaddresses(face)[ni.AF_INET][0]['addr'])
             except BaseException as exc:
@@ -424,25 +424,25 @@ if __name__ == "__main__":
 
         for face in ifaces:
             try:  # check to see if the interface has an ip
-                print('{} {}'.format(str(face + ':').ljust(20), ni.ifaddresses(face)[ni.AF_INET][0]['addr']))
+                print('{} {}'.format(str(face + ':').ljust(20), ni.ifaddresses(face)[ni.AF_INET][0]['addr'])) # print(interface:      IP)
             except BaseException as exc:
                 continue
 
-        local_ip = input("\nEnter you local ip or interface: ")
+        local_ip = input("\nEnter you local ip or interface: ") # what do they want for their interface
 
         # lets you enter eth0 as the ip
         try:  # check to see if the interface has an ip
-            if local_ip in ifaces:
+            if local_ip in ifaces: # if they gave us an interface eg eth0 or ensp01 ensure its ours
                 local_ip = str(ni.ifaddresses(local_ip)[ni.AF_INET][0]['addr'])
                 print("local IP => {}\n".format(local_ip))
-            elif local_ip in iface_ips:
+            elif local_ip in iface_ips: # if they gave us an ip ensure its ours
                 print("local IP => {}\n".format(local_ip))
-            else:
+            else: # if they gave us something incorrect/weird
                 print('The interface or IP you specified does not belong to the local machine')
                 sys.exit(0)
         except SystemExit:
             sys.exit(0)
-        except BaseException as exc:
+        except BaseException as exc: # if they give an interface that has no IP we end up here
             print('{}[!!]{} Error could not get that interface\'s address. Does it have an IP?'.format(color_RED, color_reset))
             sys.exit(0)
 
