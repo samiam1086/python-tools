@@ -1,5 +1,4 @@
 # Designed and tested with python 3.11.8 on Kali Linux 6.6.9 also works on python 3.11.6, and 3.12.0 on Kali Linux 6.3.0 and Windows 10 Pro 10.0.19045
-# only notable issues: python 3.12.0 and newer give a syntaxwarning at the start of each run due to how I do colors and I cannot stop that for some reason
 # windows interface selection gives guids instead of names for some reason??? Still gives the correct ip tho
 
 import concurrent.futures
@@ -45,7 +44,7 @@ color_YELL = '\033[93m'
 color_reset = '\033[0m'
 
 
-logo ="""
+logo =r"""
  _____            __  __ _      __                 
 /__   \_ __ __ _ / _|/ _(_) ___/ _\ ___ __ _ _ __  
   / /\/ '__/ _` | |_| |_| |/ __\ \ / __/ _` | '_ \ 
@@ -441,7 +440,6 @@ if __name__ == "__main__":
             sys.exit(0)
     else: # no -ip in args
         # print local interfaces and ips
-        print("")
         ifaces = ni.interfaces() # get all interfaces
         iface_ips = []
 
