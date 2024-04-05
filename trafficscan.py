@@ -31,7 +31,7 @@ except ModuleNotFoundError:
     sys.exit(1)
 
 try:
-    import openpyxl
+    import openpyxl # weird dependency for pandas that did not install when I tested a clean python distro and installed pandas but pandas needs it sooo
 except ModuleNotFoundError:
     print('Error: You need to install openpyxl\nInstall with "pip3 install openpyxl" or "python3 -m pip install openpyxl"')
     sys.exit(1)
