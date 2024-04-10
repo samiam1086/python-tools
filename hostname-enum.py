@@ -78,18 +78,18 @@ def get_local_ip(i=None):
 
 def get_smb_hostname(target_ip):
     try:
-        smbClient = SMBConnection(target_ip, target_ip, sess_port=445) # connect over smb
-        smbClient.login("", "") # login (this will give a STATUS_ACCESS_DENIED error but is required idk why)
+        conn = SMBConnection(target_ip, target_ip, sess_port=445) # connect over smb
+        conn.login("", "") # login (this will give a STATUS_ACCESS_DENIED error but is required idk why)
     except Exception as e:
         pass
 
     try:
-        hostname = smbClient.getServerName() # get the hostname
+        hostname = conn.getServerName() # get the hostname
     except Exception:
         return None
 
     try:
-        smbClient.logoff() # logoff is probably not necessary but who knows
+        conn.logoff() # logoff is probably not necessary but who knows
     except Exception as e:
         pass
 
