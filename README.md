@@ -51,3 +51,7 @@ llmnr-scanner.py is a tool that will check a remote host to see if it is allowin
 ## trafficscan.py
 
 this tool does the same as llmnr-scanner.py but includes checks for mdns and netbios. It only requires the python imports it uses and python.
+
+## hostname-enum.py
+
+This tool tries to get a hostname given an ip, cidr, or file of ips/cidrs using a few methods other than nslookup since that is hit or miss at best.
