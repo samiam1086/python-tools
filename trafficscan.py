@@ -121,7 +121,7 @@ def is_port_in_use(port, local_ip):  # function to check if a port is in use
     return False
 
 
-def send_mdns_query(host, local_ip, debug):
+def send_mdns_query(host, local_ip, timeout, debug):
     try:
         question = 'in-addr.arpa'
         split_address = host.split('.')
@@ -138,7 +138,7 @@ def send_mdns_query(host, local_ip, debug):
             print('Sending MDNS Query for: {}:5353 from {}:{}'.format(host, local_ip, src_port))
 
         query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN)  # make our dns query
-        response = dns.query.udp(query, host, port=5353, timeout=5, source=local_ip, source_port=src_port)  # send the query
+        response = dns.query.udp(query, host, port=5353, timeout=timeout, source=local_ip, source_port=src_port)  # send the query
 
         if response.answer:  # if the query came back then there is mdns in the environment
             try:
@@ -162,7 +162,7 @@ def send_mdns_query(host, local_ip, debug):
             return 'MDNS:'.ljust(10) + '{}NO{}\n'.format(color_GRE, color_reset)
 
 
-def send_llmnr_query(host, local_ip, debug):
+def send_llmnr_query(host, local_ip, timeout, debug):
     try:
         # Build the PTR query
         question = 'in-addr.arpa'
@@ -180,7 +180,7 @@ def send_llmnr_query(host, local_ip, debug):
             print('Sending LLMNR Query for: {}:5355 from {}:{}'.format(host, local_ip, src_port))
 
         query = dns.message.make_query(question, rdtype=dns.rdatatype.PTR, rdclass=dns.rdataclass.IN)  # make our dns query
-        response = dns.query.udp(query, '224.0.0.252', port=5355, timeout=5, source=local_ip, source_port=src_port)  # send the dns query to the victim
+        response = dns.query.udp(query, '224.0.0.252', port=5355, timeout=timeout, source=local_ip, source_port=src_port)  # send the dns query to the victim
 
         if response.answer:  # if we got a response llmnr is present on the host
             try:
@@ -203,11 +203,11 @@ def send_llmnr_query(host, local_ip, debug):
             return 'LLMNR:'.ljust(10) + '{}NO{}\n'.format(color_GRE, color_reset)
 
 
-def netbios_scan(host, debug):  # scan for netbios using nbtscan
+def netbios_scan(host, timeout, debug):  # scan for netbios using nbtscan
     # NetBIOS-NS packet structure: Transaction ID, Flags, Questions, Answer RRs, Authority RRs, Additional RRs, Name, Type, Class, TTL, Length, Number of names
     message = b'\x00\x00' + b'\x00\x10' + b'\x00\x01' + b'\x00\x00' + b'\x00\x00' + b'\x00\x00' + b'\x20' + b'CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' + b'\x00' + b'\x00\x21' + b'\x00\x01'
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # make a socket connection with out message
-    sock.settimeout(5)
+    sock.settimeout(timeout)
 
     try:
         sock.sendto(message, (host, 137))
@@ -322,13 +322,13 @@ def netbios_scan(host, debug):  # scan for netbios using nbtscan
         return output
 
 
-def mt_execute(host, local_ip, debug):  # allows for multithreading
+def mt_execute(host, local_ip, timeout, debug):  # allows for multithreading
 
     out_data = ''  # initialize our string
     out_data += 'Host: {}\n'.format(host)  # print the host ip
-    out_data += send_llmnr_query(host, local_ip, debug)  # check llmnr
-    out_data += 'NetBIOS:'.ljust(10) + '{}'.format(netbios_scan(host, debug))  # check netbios
-    out_data += send_mdns_query(host, local_ip, debug)  # check mdns
+    out_data += send_llmnr_query(host, local_ip, timeout, debug)  # check llmnr
+    out_data += 'NetBIOS:'.ljust(10) + '{}'.format(netbios_scan(host, timeout, debug))  # check netbios
+    out_data += send_mdns_query(host, local_ip, timeout, debug)  # check mdns
     return out_data
 
 
@@ -366,14 +366,14 @@ def parse_hosts_file(hosts_file):  # parse our host file
         return hosts
 
 
-def scan_hosts(hosts, output_file, local_ip, threads, debug):  # scan our hosts with multithreading
+def scan_hosts(hosts, output_file, local_ip, threads, timeout, debug):  # scan our hosts with multithreading
 
     with open(output_file, "w") as log_file:
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
             futures = []
             for host in hosts:
                 if host != local_ip:  # ensure we dont scan ourself
-                    futures.append(executor.submit(mt_execute, host, local_ip, debug))
+                    futures.append(executor.submit(mt_execute, host, local_ip, timeout, debug))
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
                 print(result)
@@ -400,7 +400,8 @@ if __name__ == "__main__":
     parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation. You can also just put an ip or cird range here ex 10.10.10.10")
     parser.add_argument('-ip', action='store', help='Your local ip or interface')
     parser.add_argument("-o", "--output_file", default="scan_log.txt", help="Output file name for the log and xlsx file. (Default=scan_log.txt)")
-    parser.add_argument('-t', '--threads', action='store', default=5, type=int, help='Number of threads to use (Default=5)')
+    parser.add_argument('-t', '--threads', action='store', default=5, type=int, help='Number of threads to use. (Default=5)')
+    parser.add_argument('-timeout', action='store', default=3, type=int, help='Timeout for each test in seconds. (Default=3)')
     parser.add_argument('-debug', action='store_true', help='Enable debugging')
 
     if len(sys.argv) == 1:
@@ -473,5 +474,5 @@ if __name__ == "__main__":
             print('{}[!!]{} Error could not get that interface\'s address. Does it have an IP?'.format(color_RED, color_reset))
             sys.exit(0)
 
-    scan_hosts(hosts, args.output_file, local_ip, args.threads, args.debug) # scan em
+    scan_hosts(hosts, args.output_file, local_ip, args.threads, args.timeout, args.debug) # scan em
     output_xlsx(args.output_file) # give an excel sheet
