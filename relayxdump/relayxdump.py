@@ -136,12 +136,17 @@ if __name__ == '__main__':
         print('Missing secretsdump.py')
         sys.exit(1)
 
+    try:
+        if os.path.isfile('{}/dumped_ips'.format(cwd)):
+            with open('{}/dumped_ips'.format(cwd), 'r') as f:
+                dat = f.read()
+                dumped_ips = dat.split('\n')
+                f.close()
+    except FileNotFoundError:
+        dumped_ips = []
+
     while True:
         try:
-            if os.path.isfile('{}/dumped_ips'.format(cwd)):
-                with open('{}/dumped_ips'.format(cwd), 'r') as f:
-                    dat = f.read()
-                    dumped_ips = dat.split('\n')
 
             headers = ["Protocol", "Target", "Username", "AdminStatus", "Port"]
             url = "http://localhost:9090/ntlmrelayx/api/v1.0/relays"
