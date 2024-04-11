@@ -149,7 +149,7 @@ if __name__ == '__main__':
         try:
 
             headers = ["Protocol", "Target", "Username", "AdminStatus", "Port"]
-            url = "http://localhost:9090/ntlmrelayx/api/v1.0/relays"
+            url = "http://127.0.0.1:9090/ntlmrelayx/api/v1.0/relays"
             try:
                 proxy_handler = ProxyHandler({})
                 opener = build_opener(proxy_handler)
