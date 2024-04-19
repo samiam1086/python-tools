@@ -346,6 +346,8 @@ def parse_hosts_file(hosts_file):  # parse our host file
                             hosts.extend(str(ip) for ip in network.hosts())
                         else:
                             hosts.append(line)
+                file.close()
+            hosts = list(set(hosts)) # unique the hosts
             return hosts
         except FileNotFoundError:
             print('The given file does not exist')
@@ -362,7 +364,7 @@ def parse_hosts_file(hosts_file):  # parse our host file
             print(e)
             print('Error: there is something wrong with the ip you gave')
             sys.exit(1)
-
+        hosts = list(set(hosts))  # unique the hosts
         return hosts
 
 
@@ -473,6 +475,8 @@ if __name__ == "__main__":
         except BaseException as exc: # if they give an interface that has no IP we end up here
             print('{}[!!]{} Error could not get that interface\'s address. Does it have an IP?'.format(color_RED, color_reset))
             sys.exit(0)
+
+    print('Total Target Hosts: {}\n'.format(len(hosts)))
 
     scan_hosts(hosts, args.output_file, local_ip, args.threads, args.timeout, args.debug) # scan em
     output_xlsx(args.output_file) # give an excel sheet
