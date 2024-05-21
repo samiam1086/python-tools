@@ -395,6 +395,7 @@ def check_write_perms():  # checks if we can write to the location that our logs
 
 
 if __name__ == "__main__":
+
     if os.name == 'nt':
         os.system('')
     print(logo)
@@ -414,7 +415,18 @@ if __name__ == "__main__":
 
     hosts = parse_hosts_file(args.hosts_file)  # get out hosts from the specified hosts_file
 
-    check_write_perms()
+    check_write_perms() # ensure the tool can write its log files to the current path
+
+    if os.path.isfile('llmnr.hosts') or os.path.isfile('mdns.hosts') or os.path.isfile('netbios.hosts') or os.path.isfile(args.output_file) or os.path.isfile(args.output_file + '.xlsx'):
+        yon = input('[!] WARNING: The log files from a previous scan are present and this WILL add them to the current scans output I HIGHLY recommend removing them Y/n: ')
+        if yon.lower() == 'y':
+            files_to_remove = ['llmnr.hosts', 'mdns.hosts', 'netbios.hosts', args.output_file, args.output_file + '.xlsx']
+            for file in files_to_remove:
+                try:
+                    os.remove(file)
+                    print('Removed {}'.format(file))
+                except Exception:
+                    continue
 
     if args.ip is not None:  # did they give us the local ip in the command line
         local_ip = args.ip
