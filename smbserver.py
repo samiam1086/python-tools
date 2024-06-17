@@ -1,5 +1,6 @@
 # This tool creates a samba smb share that can be used for exfiltrating data / hosting files. It is not meant to replace impacket's smbserver.py, however
 # theirs has issues running binaries as administrator and random disconnects that samba just does not have
+# REQUIRES SAMBA TO BE INSTALLED
 
 import os
 import sys
