@@ -32,7 +32,7 @@ def setup_share(local_ip, share_name=None, share_user=None, share_pass=None, sha
 
     print('\n[Generating share]')
     # making the directory
-    print('{} Creating the share folder'.format(green_plus))
+    print(f'{green_plus} Creating the share folder')
     os.system('sudo mkdir /var/tmp/' + share_name)
 
     # smb.conf edits
@@ -51,32 +51,32 @@ def setup_share(local_ip, share_name=None, share_user=None, share_pass=None, sha
     """.format(share_name, share_name, share_user, share_group)
 
     # copy old smb.conf file so its safe
-    print('{} Backing up the smb.conf file'.format(green_plus))
-    os.system('sudo cp /etc/samba/smb.conf ' + cwd + "/")
-    print('{} Making modifications'.format(green_plus))
+    print(f'{green_plus} Backing up the smb.conf file')
+    os.system(f'sudo cp /etc/samba/smb.conf {cwd}/')
+    print(f'{green_plus} Making modifications')
     with open('/etc/samba/smb.conf', 'a') as f:
         f.write(data)
         f.close()
 
     # create the user for the share
     # generate the group
-    print('{} Creating the group: {}'.format(green_plus, share_group))
-    os.system('sudo groupadd --system ' + share_group)
+    print(f'{green_plus} Creating the group: {share_group}')
+    os.system(f'sudo groupadd --system {share_group}')
     # make the user
-    print('{} Creating the user: {}'.format(green_plus, share_user))
-    os.system('sudo useradd --system --no-create-home --group ' + share_group + " -s /bin/false " + share_user)
+    print(f'{green_plus} Creating the user: {share_user}')
+    os.system(f'sudo useradd --system --no-create-home --group {share_group} -s /bin/false {share_user}')
     # give the user access to the share folder
-    print('{} Giving the user rights'.format(green_plus))
-    os.system('sudo chown -R ' + share_user + ":" + share_group + " /var/tmp/" + share_name)
+    print(f'{green_plus} Giving the user rights')
+    os.system(f'sudo chown -R {share_user}:{share_group} /var/tmp/{share_name}')
     # expand access to the group
-    print('{} Giving the group rights'.format(green_plus))
-    os.system('sudo chmod -R g+w /var/tmp/' + share_name)
+    print(f'{green_plus} Giving the group rights')
+    os.system(f'sudo chmod -R g+w /var/tmp/{share_name}')
     # create the smbusers password
-    print('{} Editing the SMB password'.format(green_plus))
+    print(f'{green_plus} Editing the SMB password')
     proc = subprocess.Popen(['sudo', 'smbpasswd', '-a', '-s', share_user], stdin=subprocess.PIPE)
     proc.communicate(input=share_pass.encode() + '\n'.encode() + share_pass.encode() + '\n'.encode())
     # restart the smb service
-    print('{}[+]{} Restarting the SMB service'.format(color_BLU, color_reset))
+    print(f'{color_BLU}[+]{color_reset} Restarting the SMB service')
     os.system('sudo systemctl restart smbd')
 
     print('\n[Share Info]')
@@ -96,7 +96,7 @@ def port445_check(interface_ip):
         sock.bind((interface_ip, 445))
     except socket.error as e:
         if e.errno == errno.EADDRINUSE:
-            print('{} Port 445 is already in use'.format(red_minus))
+            print(f'{red_minus} Port 445 is already in use')
             sys.exit(0)
         else:
             # something else raised the socket.error exception
