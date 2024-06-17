@@ -3,6 +3,7 @@
 
 import os
 import sys
+import errno
 import string
 import random
 import socket
