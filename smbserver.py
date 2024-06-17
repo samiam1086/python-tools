@@ -69,7 +69,7 @@ def setup_share(local_ip, share_name=None, share_user=None, share_pass=None, sha
     # give the user access to the share folder
     print(f'{green_plus} Giving the user rights')
     os.system(f'sudo chown -R {share_user}:{share_group} /var/tmp/{share_name}')
-    # expand access to the group
+    # expand access to all
     print(f'{green_plus} Giving the group rights')
     os.system(f'sudo chmod -R g+w /var/tmp/{share_name}')
     # create the smbusers password
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     if os.geteuid() != 0:
         print('[!] Must be run as sudo')
         sys.exit(1)
-
+    
     parser = argparse.ArgumentParser(add_help=True, description='All arguments are optional',)
     parser.add_argument('-sharename', action='store', help='Set the name of the attacker share Default=random')
     parser.add_argument('-shareuser', action='store', help='Set the username of the user for the share Default=random')
@@ -122,7 +122,9 @@ if __name__ == '__main__':
     parser.add_argument('-ip', action='store', help='Your machines IP/interface you want this to run on')
 
     options = parser.parse_args()
-
+    
+    print('\nPro Tip: if you are getting "Access Denied" when trying to run an exe on Windows that is hosted on the share just chmod 777 the file\n')
+    
     # all of this is just to ensure they give a valid interface lot o logic
     if options.ip is not None:  # did they give us the local ip in the command line
         local_ip = options.ip
