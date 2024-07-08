@@ -9,8 +9,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Generates a large list of usernames for kerbrute")
     parser.add_argument('-mode', action='store', default='0', choices=['0', '1', '2', '3'], help='Select which type of username you want 0=First.Last 1==FirstletterLast 2=FirstletterMILast 3=ALL')
     parser.add_argument('-o', default='./usernames.txt', action='store', help='File to output your usernames to. Deafult=./usernames.txt')
-    parser.add_argument('-inf', action='store', default='/opt/SecLists/Usernames/Names/names.txt', help='File of firstnames Default=/opt/SecLists/Usernames/Names/names.txt')
-    parser.add_argument('-il', action='store', default='/opt/SecLists/Usernames/Names/familynames-usa-top1000.txt', help='File of lastnames Default=/opt/SecLists/Usernames/Names/')
+    parser.add_argument('-inf', action='store', default='/usr/share/wordlists/seclists/Usernames/Names/names.txt', help='File of firstnames Default=/usr/share/wordlists/seclists/Usernames/Names/names.txt')
+    parser.add_argument('-il', action='store', default='/usr/share/wordlists/seclists/Usernames/Names/familynames-usa-top1000.txt', help='File of lastnames Default=/usr/share/wordlists/seclists/Usernames/Names/familynames-usa-top1000.txt')
 
     if len(sys.argv) == 1:
         parser.print_help()
