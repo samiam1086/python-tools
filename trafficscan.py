@@ -42,6 +42,7 @@ color_RED = '\033[91m'
 color_GRE = '\033[92m'
 color_YELL = '\033[93m'
 color_reset = '\033[0m'
+gold_plus = '{}[+]{}'.format(color_YELL, color_reset)
 
 
 logo =r"""
@@ -376,10 +377,14 @@ def scan_hosts(hosts, output_file, local_ip, threads, timeout, debug):  # scan o
             for host in hosts:
                 if host != local_ip:  # ensure we dont scan ourself
                     futures.append(executor.submit(mt_execute, host, local_ip, timeout, debug))
+            count = 0
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
                 print(result)
                 log_file.write(result + '\n')
+                if count % threads == 0:  # print the completion percentage
+                    print('{} {} Complete\n'.format(gold_plus, (str(round((count / len(futures)) * 100, 2)) + '%').ljust(6)))
+                count += 1
 
 
 def check_write_perms():  # checks if we can write to the location that our logs end up to ensure there are no errors
