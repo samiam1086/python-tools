@@ -405,7 +405,7 @@ if __name__ == "__main__":
         os.system('')
     print(logo)
     parser = argparse.ArgumentParser(description="Check if hosts are running LLMNR.")  # argparse
-    parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation. You can also just put an ip or cird range here ex 10.10.10.10")
+    parser.add_argument("hosts_file", help="Path to a file containing hosts, either as individual IPs or in CIDR notation. You can also just put an ip or cidr range here ex 10.10.10.10")
     parser.add_argument('-ip', action='store', help='Your local ip or interface')
     parser.add_argument("-o", "--output_file", default="scan_log.txt", help="Output file name for the log and xlsx file. (Default=scan_log.txt)")
     parser.add_argument('-t', '--threads', action='store', default=5, type=int, help='Number of threads to use. (Default=5)')
