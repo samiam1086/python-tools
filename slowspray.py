@@ -18,9 +18,11 @@ color_RED = '\033[91m'
 color_GRE = '\033[92m'
 color_YELL = '\033[93m'
 color_reset = '\033[0m'
+color_PURP = '\033[35m'
 green_plus = "{}[+]{}".format(color_GRE, color_reset)
 red_minus = "{}[-]{}".format(color_RED, color_reset)
 gold_plus = "{}[+]{}".format(color_YELL, color_reset)
+purple_plus = "{}[+]{}".format(color_PURP, color_reset)
 password_list = []
 
 
@@ -73,8 +75,8 @@ def sendit(username, password, domain, remoteName, remoteHost, hashes=None,aesKe
                 with open('locked-slowspray', 'a') as f:
                     f.write('Locked\n')
                     f.close()
-            if options.s == False or str(e).find('STATUS_ACCOUNT_LOCKED_OUT') != -1:
-                print(red_minus, remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")])
+            if options.s == False or str(e).find('STATUS_ACCOUNT_LOCKED_OUT') != -1 or str(e).find('STATUS_PASSWORD_MUST_CHANGE') != -1 or str(e).find('STATUS_LOGON_TYPE_NOT_GRANTED') != -1 or str(e).find('STATUS_ACCOUNT_DISABLED') != -1 or str(e).find('STATUS_ACCOUNT_EXPIRED') != -1 or str(e).find('STATUS_ACCOUNT_RESTRICTION') != -1 or str(e).find('STATUS_INVALID_LOGON_HOURS') != -1 or str(e).find('STATUS_PASSWORD_EXPIRED') != -1 or str(e).find('STATUS_ACCESS_DENIED') != -1:
+                print(purple_plus if str(e).find('STATUS_PASSWORD_MUST_CHANGE') != -1 or str(e).find('STATUS_LOGON_TYPE_NOT_GRANTED') != -1 or str(e).find('STATUS_ACCOUNT_DISABLED') != -1 or str(e).find('STATUS_ACCOUNT_EXPIRED') != -1 or str(e).find('STATUS_ACCOUNT_RESTRICTION') != -1 or str(e).find('STATUS_INVALID_LOGON_HOURS') != -1 or str(e).find('STATUS_PASSWORD_EXPIRED') != -1 or str(e).find('STATUS_ACCESS_DENIED') != -1 else red_minus, remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")])
             if options.o is not None:
                 with open(options.o, 'a') as f:
                     f.write('{} {} {}\n'.format(remoteName.ljust(20), upasscombo.ljust(30), str(e)[:str(e).find("(")]))
